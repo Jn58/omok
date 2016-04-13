@@ -3,6 +3,8 @@
 #include <stack>
 #include <list>
 
+#define MAX_STEP 4
+
 using namespace std;
 struct POS
 {
@@ -53,6 +55,12 @@ public:
 		printf("\n\n");
 
 	}
+	~MAP()
+	{
+		for (int i = 0; i < size; i++)
+			delete map[i];
+		delete map;
+	}
 };
 
 class calc
@@ -64,25 +72,25 @@ public:
 	int turn;
 	POS pos;
 	double point = 0;
-	int left = 0;
+	int step = 0;
 	std::queue<POS> posQ;
 	bool operator<(const calc & other)
 	{
 		return point > other.point;
 	};
-	calc(MAP m, int t, int l)
+	calc(MAP m, int t, int s)
 	{
 		map = new MAP(m);
 		turn = t;
-		left = l;
+		step = s;
 	}
-	calc(calc  *par, MAP m, POS p, int t, int l)
+	calc(calc  *par, MAP m, POS p, int t, int s)
 	{
 		parent = par;
 		map = new MAP(m);
 		pos = p;
 		turn = t;
-		left = l;
+		step = s;
 		map->map[p.x][p.y] = t;
 		evaluatePoint();
 		//map->print();
@@ -90,7 +98,7 @@ public:
 	void work()
 	{
 
-		makeChild(left - 1);
+		makeChild(step + 1);
 	}
 	void updatePoint(int add)
 	{
@@ -118,7 +126,7 @@ public:
 		{
 			sum += (i + 1)*(i + 1)*pi[i];
 		}
-		updatePoint(sum*turn*(1 + left));
+		updatePoint(sum*turn*(1 + step));
 	}
 	void makeChild(int c);
 	void possiblePosition(void)
@@ -137,7 +145,7 @@ public:
 
 		if (temp_Q.empty())
 		{
-			POS temp = { (1 + map->size) / 2,(1 + map->size) };
+			POS temp = { map->size / 2, map->size/2 };
 			posQ.push(temp);
 			return;
 		}
@@ -149,47 +157,43 @@ public:
 		{
 			POS temp_pos = temp_Q.front();
 			temp_Q.pop();
-			for (int i = 1; i <= 5; i++)
+			for (int i = 1; i < 5; i++)
 			{
-				if (temp_pos.y - i >= 1)
+				if (temp_pos.y - i >= 0)
 				{
 					if (map->map[temp_pos.x][temp_pos.y - i] == 0)  posQ.push({ temp_pos.x,temp_pos.y - i });
 				}
-				else if (temp_pos.y + i <= map->size)
+				if (temp_pos.y + i < map->size)
 				{
 					if (map->map[temp_pos.x][temp_pos.y + i] == 0)  posQ.push({ temp_pos.x,temp_pos.y + i });
 				}
-				if (temp_pos.x + i <= map->size)
+
+				if (temp_pos.x + i < map->size)
 				{
 					if (map->map[temp_pos.x + i][temp_pos.y] == 0)  posQ.push({ temp_pos.x + i,temp_pos.y });
-					if (temp_pos.y - i >= 1)
+
+					if (temp_pos.y - i >= 0)
 					{
 						if (map->map[temp_pos.x + i][temp_pos.y - i] == 0)  posQ.push({ temp_pos.x + i,temp_pos.y - i });
 					}
-					else if (temp_pos.y + i <= map->size)
+					if (temp_pos.y + i < map->size)
 					{
 						if (map->map[temp_pos.x + i][temp_pos.y + i] == 0)  posQ.push({ temp_pos.x + i,temp_pos.y + i });
 					}
 				}
-				else if (temp_pos.x - i >= 1)
+				if (temp_pos.x - i >= 0)
 				{
 
-					if (map->map[temp_pos.x - i][temp_pos.y] == 0)  posQ.push({ temp_pos.x + i,temp_pos.y });
-					if (temp_pos.y - i >= 1)
+					if (map->map[temp_pos.x - i][temp_pos.y] == 0)  posQ.push({ temp_pos.x - i,temp_pos.y });
+					if (temp_pos.y - i >= 0)
 					{
 						if (map->map[temp_pos.x - i][temp_pos.y - i] == 0)  posQ.push({ temp_pos.x - i,temp_pos.y - i });
 					}
-					else if (temp_pos.y + i <= map->size)
+					if (temp_pos.y + i < map->size)
 					{
 						if (map->map[temp_pos.x - i][temp_pos.y + i] == 0)  posQ.push({ temp_pos.x - i,temp_pos.y + i });
 					}
 				}
-
-
-
-
-
-
 			}
 		}
 
@@ -217,35 +221,33 @@ public:
 			child.pop_front();
 			delete temp;
 		}
-		delete map;
 	}
-
-
-
+	
 };
 
 queue<calc*> toDo;
 
 void calc::makeChild(int c)
 {
-	if (c == 0) return;
+	if (c > MAX_STEP) return;
 	possiblePosition();
 	while (!posQ.empty())
 	{
 		POS childPos = posQ.front();
 		posQ.pop();
-		calc* child = new calc(this, *map, childPos, turn*-1, left - 1);
+		calc* child = new calc(this, *map, childPos, turn*-1, step + 1);
 		toDo.push(child);
 		this->child.push_back(child);
 	}
+	delete map;
 }
 
 int main(void)
 {
 	MAP map;
-	POS p = { -1,-1 };
+	POS p;
 	map.init_map(5);
-	calc *ai = new calc(map, -1, 5);
+	calc *ai = new calc(map, -1, 0);
 	ai->work();
 	while (!toDo.empty())
 	{

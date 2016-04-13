@@ -51,14 +51,14 @@ public:
 		}
 
 		printf("\n\n");
-			
+
 	}
 };
 
 class calc
 {
 public:
-	calc* parent=NULL;
+	calc* parent = NULL;
 	list<calc*> child;
 	MAP * map;
 	int turn;
@@ -76,7 +76,7 @@ public:
 		turn = t;
 		left = l;
 	}
-	calc( calc  *par,  MAP m, POS p, int t,int l)
+	calc(calc  *par, MAP m, POS p, int t, int l)
 	{
 		parent = par;
 		map = new MAP(m);
@@ -100,47 +100,106 @@ public:
 	void evaluatePoint(void)
 	{
 		int pi[5] = { 0, };
-		int sum=0;
+		int sum = 0;
 		int count = 0;
-		for (int i = 0,j=0; i <5; i++)
+		for (int i = 0, j = 0; i <5; i++)
 		{
 			if (pos.x - 4 + i < 0) continue;
 			if (pos.x + i >= map->size) break;
-			for (j = 0,count=0; j < 5; j++)
+			for (j = 0, count = 0; j < 5; j++)
 			{
 				if (map->map[pos.x - 4 + i + j][pos.y] == turn*-1) break;
 				if (map->map[pos.x - 4 + i + j][pos.y] == turn) count++;
 			}
-			if (j == 5) 
+			if (j == 5)
 				pi[count - 1]++;
 		}
 		for (int i = 0; i < 5; i++)
 		{
-			sum += (i+1)*(i+1)*pi[i];
+			sum += (i + 1)*(i + 1)*pi[i];
 		}
-		 updatePoint(sum*turn*(1+left));
+		updatePoint(sum*turn*(1 + left));
 	}
-	void makeChild( int c);
+	void makeChild(int c);
 	void possiblePosition(void)
 	{
-		for (int i = 0; i < map->size; i++)
+		queue<POS> temp_Q;
+		for (int i = 0; i < map->size; i++) {
 			for (int j = 0; j < map->size; j++)
 			{
-				if (map->map[i][j] == 0)
+				if (map->map[i][j] != 0)
 				{
 					POS temp = { i,j };
-					posQ.push(temp);
-					
-					
+					temp_Q.push(temp);
 				}
 			}
+		}
+
+		if (temp_Q.empty())
+		{
+			POS temp = { (1 + map->size) / 2,(1 + map->size) };
+			posQ.push(temp);
+			return;
+		}
+
+		MAP temp_map;
+		temp_map.init_map(map->size);
+
+		while (!temp_Q.empty())
+		{
+			POS temp_pos = temp_Q.front();
+			temp_Q.pop();
+			for (int i = 1; i <= 5; i++)
+			{
+				if (temp_pos.y - i >= 1)
+				{
+					if (map->map[temp_pos.x][temp_pos.y - i] == 0)  posQ.push({ temp_pos.x,temp_pos.y - i });
+				}
+				else if (temp_pos.y + i <= map->size)
+				{
+					if (map->map[temp_pos.x][temp_pos.y + i] == 0)  posQ.push({ temp_pos.x,temp_pos.y + i });
+				}
+				if (temp_pos.x + i <= map->size)
+				{
+					if (map->map[temp_pos.x + i][temp_pos.y] == 0)  posQ.push({ temp_pos.x + i,temp_pos.y });
+					if (temp_pos.y - i >= 1)
+					{
+						if (map->map[temp_pos.x + i][temp_pos.y - i] == 0)  posQ.push({ temp_pos.x + i,temp_pos.y - i });
+					}
+					else if (temp_pos.y + i <= map->size)
+					{
+						if (map->map[temp_pos.x + i][temp_pos.y + i] == 0)  posQ.push({ temp_pos.x + i,temp_pos.y + i });
+					}
+				}
+				else if (temp_pos.x - i >= 1)
+				{
+
+					if (map->map[temp_pos.x - i][temp_pos.y] == 0)  posQ.push({ temp_pos.x + i,temp_pos.y });
+					if (temp_pos.y - i >= 1)
+					{
+						if (map->map[temp_pos.x - i][temp_pos.y - i] == 0)  posQ.push({ temp_pos.x - i,temp_pos.y - i });
+					}
+					else if (temp_pos.y + i <= map->size)
+					{
+						if (map->map[temp_pos.x - i][temp_pos.y + i] == 0)  posQ.push({ temp_pos.x - i,temp_pos.y + i });
+					}
+				}
+
+
+
+
+
+
+			}
+		}
+
 	}
 	POS nextPOS(void)
 	{
 		child.sort();
 		if (turn == -1)
 		{
-			
+
 			return child.front()->pos;
 		}
 		else
@@ -148,7 +207,7 @@ public:
 			child.front()->child.sort();
 			return child.front()->child.front()->pos;
 		}
-		
+
 	}
 	~calc()
 	{
@@ -161,13 +220,13 @@ public:
 		delete map;
 	}
 
-	
+
 
 };
 
 queue<calc*> toDo;
 
-void calc::makeChild( int c)
+void calc::makeChild(int c)
 {
 	if (c == 0) return;
 	possiblePosition();
@@ -186,7 +245,7 @@ int main(void)
 	MAP map;
 	POS p = { -1,-1 };
 	map.init_map(5);
-	calc *ai=new calc(map, -1,5);
+	calc *ai = new calc(map, -1, 5);
 	ai->work();
 	while (!toDo.empty())
 	{
@@ -194,7 +253,7 @@ int main(void)
 		toDo.pop();
 		temp->work();
 	}
-	p=ai->nextPOS();
+	p = ai->nextPOS();
 	cout << p.x << p.y << endl;
 	delete ai;
 	return 0;

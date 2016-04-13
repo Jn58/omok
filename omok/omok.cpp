@@ -14,9 +14,10 @@ class MAP
 {
 public:
 	int ** map;
-	int size;
+	int size=0;
 	void init_map(int n)
 	{
+		this->~MAP();
 		size = n;
 		map = new int*[size];
 		for (int i = 0; i < size; i++)
@@ -57,9 +58,15 @@ public:
 	}
 	~MAP()
 	{
-		for (int i = 0; i < size; i++)
-			delete map[i];
-		delete map;
+		if (size != 0)
+		{
+			for (int i = 0; i < size; i++)
+			{
+				delete map[i];
+			}				
+			delete map;
+		}
+		
 	}
 };
 
@@ -99,6 +106,7 @@ public:
 	{
 
 		makeChild(step + 1);
+		delete map;
 	}
 	void updatePoint(int add)
 	{
@@ -221,6 +229,7 @@ public:
 			child.pop_front();
 			delete temp;
 		}
+		
 	}
 	
 };
@@ -239,24 +248,41 @@ void calc::makeChild(int c)
 		toDo.push(child);
 		this->child.push_back(child);
 	}
-	delete map;
+	
 }
 
+
+bool check(MAP map)
+{
+	return true;
+}
+POS human(MAP map)
+{
+	return { 2,2 };
+}
 int main(void)
 {
 	MAP map;
 	POS p;
-	map.init_map(5);
-	calc *ai = new calc(map, -1, 0);
-	ai->work();
-	while (!toDo.empty())
+	map.init_map(5);	
+
+	while (1)
 	{
-		calc *temp = toDo.front();
-		toDo.pop();
-		temp->work();
+		calc *ai = new calc(map, -1, 0);
+		ai->work();
+		while (!toDo.empty())
+		{
+			calc *temp = toDo.front();
+			toDo.pop();
+			temp->work();
+		}
+		p = ai->nextPOS();
+		map.map[p.x][p.y] = 1;
+		delete ai;
+		if (check(map)) break;
+		p = human(map);
+		map.map[p.x][p.y] = -1;
+		if (check(map)) break;
 	}
-	p = ai->nextPOS();
-	cout << p.x << p.y << endl;
-	delete ai;
 	return 0;
 }

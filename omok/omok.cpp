@@ -2,14 +2,34 @@
 #include <queue>
 #include <stack>
 #include <list>
+#include <stdio.h>
+#include <stdlib.h>
+#include <Windows.h>
+#include <conio.h>
 
-#define MAX_STEP 4
+#define MAX_STEP 3
 
 using namespace std;
+
+typedef enum { NOCURSOR, SOLIDCURSOR, NORMALCURSOR } CURSOR_TYPE;
+
 struct POS
 {
 	int x, y;
 };
+
+void gotoxy(int x, int y);
+
+void setcursortype(CURSOR_TYPE c);
+
+void playpos(int x, int y);
+
+void setcolor(int color, int bgcolor);
+
+void initMap(int size);
+void print(POS p,int t);
+POS player(void);
+
 class MAP
 {
 public:
@@ -264,8 +284,10 @@ int main(void)
 {
 	MAP map;
 	POS p;
-	map.init_map(5);	
-
+	map.init_map(5);
+	system("mode con:cols=40 lines=20");
+	setcursortype(NOCURSOR);
+	initMap(5);
 	while (1)
 	{
 		calc *ai = new calc(map, -1, 0);
@@ -277,12 +299,131 @@ int main(void)
 			temp->work();
 		}
 		p = ai->nextPOS();
+		print(p, 1);
 		map.map[p.x][p.y] = 1;
 		delete ai;
-		if (check(map)) break;
-		p = human(map);
+		//if (check(map)) break;
+		do
+		{
+			p = player();
+			if (map.map[p.x][p.y] != 0)continue;
+		} while (0);
+		
 		map.map[p.x][p.y] = -1;
-		if (check(map)) break;
+		print(p, -1);
+		//if (check(map)) break;
 	}
 	return 0;
+}
+
+
+
+void gotoxy(int x, int y)
+{
+	COORD pos = { x,y };
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+}
+void setcursortype(CURSOR_TYPE c)
+{
+	CONSOLE_CURSOR_INFO CurInfo;
+	switch (c)
+	{
+	case NOCURSOR:
+		CurInfo.dwSize = 1;
+		CurInfo.bVisible = FALSE;
+		break;
+	case SOLIDCURSOR:
+		CurInfo.dwSize = 100;
+		CurInfo.bVisible = TRUE;
+		break;
+	case NORMALCURSOR:
+		CurInfo.dwSize = 20;
+		CurInfo.bVisible = TRUE;
+		break;
+	}
+	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &CurInfo);
+}
+void playpos(int x, int y)
+{
+	gotoxy(4 * x + 2, y * 2 + 1);
+}
+void setcolor(int color, int bgcolor)
+{
+	color &= 0xf;
+	bgcolor &= 0xf;
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), (bgcolor << 4) | color);
+}
+void initMap(int size)
+{
+	setcolor(15, 0);
+	printf("  A ");
+	for (int i = 0; i < size - 1; i++)
+	{
+		printf("  %c ", i + 'B');
+	}
+	printf("\n");
+	printf("1 ");
+	setcolor(0, 14);
+	printf("┌─");
+	for (int i = 0; i < size - 2; i++) printf("┬─");
+	printf("┐\n");
+	setcolor(15, 0);
+	printf("  ");
+	setcolor(0, 14);
+	printf("│");
+	for (int i = 0; i < size - 1; i++) printf("　│");
+	printf("\n");
+	for (int j = 0; j < size - 2; j++)
+	{
+		setcolor(15, 0);
+		printf("%d ", j + 2);
+		setcolor(0, 14);
+		printf("├─");
+		for (int i = 0; i < size - 2; i++) printf("┼─");
+
+		printf("┤\n");
+		setcolor(15, 0);
+		printf("  ");
+		setcolor(0, 14);
+		printf("│");
+		for (int i = 0; i < size - 1; i++) printf("　│");
+		printf("\n");
+	}
+	setcolor(15, 0);
+	printf("%d ", size);
+	setcolor(0, 14);
+	printf("└─");
+	for (int i = 0; i < size - 2; i++) printf("┴─");
+	printf("┘\n");
+
+
+}
+void print(POS p, int t)
+{
+	
+	playpos(p.x, p.y);
+	if (t==1)
+	{
+		setcolor(15, 14);
+		printf("●");
+	}
+	else
+	{
+		setcolor(0, 14);
+		printf("●");
+	}
+		
+	setcolor(15, 0);
+}
+
+POS player(void)
+{
+	POS p;
+	gotoxy(0, 12);
+	printf("놓을곳을입력하세요:  \b\b");
+	char input[100];
+	scanf("%s", input);
+	p.x = (input[0] & ~32) - 'A';
+	p.y = input[1] - '1';
+	return p;
 }

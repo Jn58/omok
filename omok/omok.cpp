@@ -6,12 +6,15 @@
 #include <stdlib.h>
 #include <Windows.h>
 #include <conio.h>
+#include <math.h>
 
-#define MAX_STEP 3
+#define MAX_STEP 2
 
 using namespace std;
 
 typedef enum { NOCURSOR, SOLIDCURSOR, NORMALCURSOR } CURSOR_TYPE;
+
+class calc;
 
 struct POS
 {
@@ -27,14 +30,15 @@ void playpos(int x, int y);
 void setcolor(int color, int bgcolor);
 
 void initMap(int size);
-void print(POS p,int t);
+void print(POS p, int t);
 POS player(void);
+bool PComp(const calc * const & a, const calc * const & b);
 
 class MAP
 {
 public:
 	int ** map;
-	int size=0;
+	int size = 0;
 	void init_map(int n)
 	{
 		this->~MAP();
@@ -83,10 +87,10 @@ public:
 			for (int i = 0; i < size; i++)
 			{
 				delete map[i];
-			}				
+			}
 			delete map;
 		}
-		
+
 	}
 };
 
@@ -103,8 +107,12 @@ public:
 	std::queue<POS> posQ;
 	bool operator<(const calc & other)
 	{
-		return point > other.point;
+		return point < other.point;
 	};
+	bool compare_pointer(const calc* const & first, const calc * const & second)
+	{
+		return first->point > second->point;
+	}
 	calc(MAP m, int t, int s)
 	{
 		map = new MAP(m);
@@ -128,7 +136,7 @@ public:
 		makeChild(step + 1);
 		delete map;
 	}
-	void updatePoint(int add)
+	void updatePoint(double add)
 	{
 		point += add;
 		if (parent) parent->updatePoint(add);
@@ -136,9 +144,9 @@ public:
 	void evaluatePoint(void)
 	{
 		int pi[5] = { 0, };
-		int sum = 0;
+		double sum = 0;
 		int count = 0;
-		for (int i = 0, j = 0; i <5; i++)
+		for (int i = 0, j = 0; i < 5; i++)
 		{
 			if (pos.x - 4 + i < 0) continue;
 			if (pos.x + i >= map->size) break;
@@ -150,11 +158,47 @@ public:
 			if (j == 5)
 				pi[count - 1]++;
 		}
+		for (int i = 0, j = 0; i < 5; i++)
+		{
+			if (pos.y - 4 + i < 0) continue;
+			if (pos.y + i >= map->size) break;
+			for (j = 0, count = 0; j < 5; j++)
+			{
+				if (map->map[pos.x][pos.y - 4 + i + j] == turn*-1) break;
+				if (map->map[pos.x][pos.y - 4 + i + j] == turn) count++;
+			}
+			if (j == 5)
+				pi[count - 1]++;
+		}
+		for (int i = 0, j = 0; i < 5; i++)
+		{
+			if (pos.x - 4 + i < 0 || pos.y - 4 + i < 0) continue;
+			if (pos.x + i >= map->size || pos.y + i >= map->size) break;
+			for (j = 0, count = 0; j < 5; j++)
+			{
+				if (map->map[pos.x - 4 + i + j][pos.y - 4 + i + j] == turn*-1) break;
+				if (map->map[pos.x - 4 + i + j][pos.y - 4 + i + j] == turn) count++;
+			}
+			if (j == 5)
+				pi[count - 1]++;
+		}
+		for (int i = 0, j = 0; i < 5; i++)
+		{
+			if (pos.x - 4 + i < 0 || pos.y + 4 - i >= map->size) continue;
+			if (pos.x + i >= map->size || pos.y - i < 0) break;
+			for (j = 0, count = 0; j < 5; j++)
+			{
+				if (map->map[pos.x - 4 + i + j][pos.y + 4 - i - j] == turn*-1) break;
+				if (map->map[pos.x - 4 + i + j][pos.y + 4 - i - j] == turn) count++;
+			}
+			if (j == 5)
+				pi[count - 1]++;
+		}
 		for (int i = 0; i < 5; i++)
 		{
-			sum += (i + 1)*(i + 1)*pi[i];
+			sum += pow(1000, i)*pi[i];
 		}
-		updatePoint(sum*turn*(1 + step));
+		updatePoint(sum*turn / (pow(step, 4)));
 	}
 	void makeChild(int c);
 	void possiblePosition(void)
@@ -173,7 +217,7 @@ public:
 
 		if (temp_Q.empty())
 		{
-			POS temp = { map->size / 2, map->size/2 };
+			POS temp = { map->size / 2, map->size / 2 };
 			posQ.push(temp);
 			return;
 		}
@@ -228,7 +272,7 @@ public:
 	}
 	POS nextPOS(void)
 	{
-		child.sort();
+		child.sort(PComp);
 		if (turn == -1)
 		{
 
@@ -249,9 +293,9 @@ public:
 			child.pop_front();
 			delete temp;
 		}
-		
+
 	}
-	
+
 };
 
 queue<calc*> toDo;
@@ -268,29 +312,51 @@ void calc::makeChild(int c)
 		toDo.push(child);
 		this->child.push_back(child);
 	}
-	
+
 }
 
 
-bool check(MAP map)
+int check(MAP *map)
 {
-	return true;
+	for (int j = 0; j < map->size - 4; j++)
+	{
+		for (int k = 0; k < map->size - 4; k++)
+		{
+			if (map->map[j][k] == map->map[1+j][1+k] && map->map[j][k] == map->map[2+j][2+k] && map->map[j][k] == map->map[3+j][3+k] && map->map[j][k] == map->map[4+j][4+k]) return map->map[j][k];
+			if (map->map[4+j][k] == map->map[3+j][1+k] && map->map[4+j][k] == map->map[2+j][2+k] && map->map[4+j][k] == map->map[1+j][3+k] && map->map[4+j][k] == map->map[j][4+k]) return map->map[4+j][k];
+			for (int i = 0; i < map->size; i++)
+			{
+				if (map->map[i+j][k] == map->map[i+j][1+k] && map->map[i+j][k] == map->map[i+j][2+k] && map->map[i+j][k] == map->map[i+j][3+k] && map->map[i+j][k] == map->map[i+j][4+k]) return map->map[i+j][k];
+				if (map->map[j][i+k] == map->map[1+j][i+k] && map->map[j][i+k] == map->map[2+j][i+k] && map->map[j][i+k] == map->map[3+j][i+k] && map->map[j][i+k] == map->map[4+j][i+k]) return map->map[j][i+k];
+
+			}
+		}
+	}
+	
+	return 0;
 }
 POS human(MAP map)
 {
-	return { 2,2 };
+	return{ 2,2 };
 }
+
+MAP map;
 int main(void)
 {
-	MAP map;
+
 	POS p;
-	map.init_map(5);
-	system("mode con:cols=40 lines=20");
+	map.init_map(15);
+	char * setting = new char[100];
+	sprintf(setting, "mode con:cols=%d lines=%d", map.size * 4 + 4, map.size * 2 + 4);
+	system(setting);
 	setcursortype(NOCURSOR);
-	initMap(5);
+	initMap(map.size);
 	while (1)
 	{
+		int ch;
 		calc *ai = new calc(map, -1, 0);
+		gotoxy(0, map.size * 2);
+		cout << "연산중...                " << endl;
 		ai->work();
 		while (!toDo.empty())
 		{
@@ -302,17 +368,48 @@ int main(void)
 		print(p, 1);
 		map.map[p.x][p.y] = 1;
 		delete ai;
-		//if (check(map)) break;
+		ch = check(&map);
+		if (ch)
+		{
+			gotoxy(0, map.size * 2 + 1);
+			if (ch == 1)
+			{
+				cout << "AI win" << endl;
+				break;
+			}
+			else
+			{
+				cout << "Human win" << endl;
+				break;
+			}
+		}
 		do
 		{
 			p = player();
 			if (map.map[p.x][p.y] != 0)continue;
 		} while (0);
-		
+
 		map.map[p.x][p.y] = -1;
 		print(p, -1);
-		//if (check(map)) break;
+		ch = check(&map);
+		if (ch)
+		{
+			gotoxy(0, map.size * 2 + 1);
+			if (ch == 1)
+			{
+
+				cout << "AI win" << endl;
+				break;
+			}
+			else
+			{
+
+				cout << "Human win" << endl;
+				break;
+			}
+		}
 	}
+	system("pause");
 	return 0;
 }
 
@@ -345,7 +442,7 @@ void setcursortype(CURSOR_TYPE c)
 }
 void playpos(int x, int y)
 {
-	gotoxy(4 * x + 2, y * 2 + 1);
+	gotoxy(4 * x + 3, y * 2 + 1);
 }
 void setcolor(int color, int bgcolor)
 {
@@ -356,19 +453,19 @@ void setcolor(int color, int bgcolor)
 void initMap(int size)
 {
 	setcolor(15, 0);
-	printf("  A ");
+	printf("   A ");
 	for (int i = 0; i < size - 1; i++)
 	{
 		printf("  %c ", i + 'B');
 	}
 	printf("\n");
-	printf("1 ");
+	printf(" 1 ");
 	setcolor(0, 14);
 	printf("┌─");
 	for (int i = 0; i < size - 2; i++) printf("┬─");
 	printf("┐\n");
 	setcolor(15, 0);
-	printf("  ");
+	printf("   ");
 	setcolor(0, 14);
 	printf("│");
 	for (int i = 0; i < size - 1; i++) printf("　│");
@@ -376,33 +473,33 @@ void initMap(int size)
 	for (int j = 0; j < size - 2; j++)
 	{
 		setcolor(15, 0);
-		printf("%d ", j + 2);
+		printf("%2d ", j + 2);
 		setcolor(0, 14);
 		printf("├─");
 		for (int i = 0; i < size - 2; i++) printf("┼─");
 
 		printf("┤\n");
 		setcolor(15, 0);
-		printf("  ");
+		printf("   ");
 		setcolor(0, 14);
 		printf("│");
 		for (int i = 0; i < size - 1; i++) printf("　│");
 		printf("\n");
 	}
 	setcolor(15, 0);
-	printf("%d ", size);
+	printf("%2d ", size);
 	setcolor(0, 14);
 	printf("└─");
 	for (int i = 0; i < size - 2; i++) printf("┴─");
 	printf("┘\n");
-
+	setcolor(15, 0);
 
 }
 void print(POS p, int t)
 {
-	
+
 	playpos(p.x, p.y);
-	if (t==1)
+	if (t == 1)
 	{
 		setcolor(15, 14);
 		printf("●");
@@ -412,18 +509,23 @@ void print(POS p, int t)
 		setcolor(0, 14);
 		printf("●");
 	}
-		
+
 	setcolor(15, 0);
 }
 
 POS player(void)
 {
 	POS p;
-	gotoxy(0, 12);
+	gotoxy(0, map.size * 2);
 	printf("놓을곳을입력하세요:  \b\b");
 	char input[100];
 	scanf("%s", input);
 	p.x = (input[0] & ~32) - 'A';
 	p.y = input[1] - '1';
 	return p;
+}
+
+bool PComp(const calc * const & a, const calc * const & b)
+{
+	return a->point > b->point;
 }

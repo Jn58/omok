@@ -35,6 +35,7 @@ void print(POS p, int t);
 POS player(void);
 bool PComp(const calc * const & a, const calc * const & b);
 
+
 class MAP
 {
 public:
@@ -94,7 +95,7 @@ public:
 
 	}
 };
-
+bool rule(MAP * m, POS * p, int t);
 class calc
 {
 public:
@@ -309,6 +310,7 @@ void calc::makeChild(int c)
 	{
 		POS childPos = posQ.front();
 		posQ.pop();
+		if (rule(map, &childPos, turn)) continue;
 		calc* child = new calc(this, *map, childPos, turn*-1, step + 1);
 		toDo.push(child);
 		this->child.push_back(child);
@@ -323,22 +325,22 @@ int check(MAP *map)
 	{
 		for (int k = 0; k < map->size - 4; k++)
 		{
-			if (map->map[j][k]&&map->map[j][k] == map->map[1+j][1+k] && map->map[j][k] == map->map[2+j][2+k] && map->map[j][k] == map->map[3+j][3+k] && map->map[j][k] == map->map[4+j][4+k]) return map->map[j][k];
-			if (map->map[4 + j][k] &&map->map[4+j][k] == map->map[3+j][1+k] && map->map[4+j][k] == map->map[2+j][2+k] && map->map[4+j][k] == map->map[1+j][3+k] && map->map[4+j][k] == map->map[j][4+k]) return map->map[4+j][k];
+			if (map->map[j][k] && map->map[j][k] == map->map[1 + j][1 + k] && map->map[j][k] == map->map[2 + j][2 + k] && map->map[j][k] == map->map[3 + j][3 + k] && map->map[j][k] == map->map[4 + j][4 + k]) return map->map[j][k];
+			if (map->map[4 + j][k] && map->map[4 + j][k] == map->map[3 + j][1 + k] && map->map[4 + j][k] == map->map[2 + j][2 + k] && map->map[4 + j][k] == map->map[1 + j][3 + k] && map->map[4 + j][k] == map->map[j][4 + k]) return map->map[4 + j][k];
 		}
 	}
 	for (int j = 0; j < map->size; j++)
 	{
-		for (int k = 0; k < map->size-4; k++)
+		for (int k = 0; k < map->size - 4; k++)
 		{
-			if (map->map[j][k]&&map->map[j][k] == map->map[j][1 + k] && map->map[j][k] == map->map[j][2 + k] && map->map[j][k] == map->map[j][3 + k] && map->map[j][k] == map->map[j][4 + k]) return map->map[j][k];
+			if (map->map[j][k] && map->map[j][k] == map->map[j][1 + k] && map->map[j][k] == map->map[j][2 + k] && map->map[j][k] == map->map[j][3 + k] && map->map[j][k] == map->map[j][4 + k]) return map->map[j][k];
 		}
 	}
 	for (int j = 0; j < map->size - 4; j++)
 	{
 		for (int k = 0; k < map->size; k++)
 		{
-				if (map->map[j][k]&&map->map[j][k] == map->map[1 + j][k] && map->map[j][k] == map->map[2 + j][k] && map->map[j][k] == map->map[3 + j][k] && map->map[j][k] == map->map[4 + j][k]) return map->map[j][k];
+			if (map->map[j][k] && map->map[j][k] == map->map[1 + j][k] && map->map[j][k] == map->map[2 + j][k] && map->map[j][k] == map->map[3 + j][k] && map->map[j][k] == map->map[4 + j][k]) return map->map[j][k];
 		}
 	}
 	for (int i = 0; i < map->size; i++)
@@ -389,20 +391,20 @@ int main(void)
 				cout << "AI win" << endl;
 				break;
 			}
-			else if(ch==-1)
+			else if (ch == -1)
 			{
 				cout << "Human win" << endl;
 				break;
 			}
 			else
 			{
-				cout <<"Draw!" << endl;
+				cout << "Draw!" << endl;
 				break;
 			}
 		}
-		
-			while (1)
-			{
+
+		while (1)
+		{
 			p = player();
 			if (map.map[p.x][p.y] == 0) break;
 		}
@@ -426,12 +428,12 @@ int main(void)
 			}
 			else
 			{
-				cout<<"Draw!"<<endl;
+				cout << "Draw!" << endl;
 				break;
 			}
 		}
 	}
-	//system("pause");
+	system("pause");
 	return 0;
 }
 
@@ -482,13 +484,13 @@ void initMap(int size)
 	}
 	printf("\n");
 	printf(" 1 ");
-	setcolor(0, 14);
+	setcolor(0, 6);
 	printf("┌─");
 	for (int i = 0; i < size - 2; i++) printf("┬─");
 	printf("┐\n");
 	setcolor(15, 0);
 	printf("   ");
-	setcolor(0, 14);
+	setcolor(0, 6);
 	printf("│");
 	for (int i = 0; i < size - 1; i++) printf("　│");
 	printf("\n");
@@ -496,21 +498,21 @@ void initMap(int size)
 	{
 		setcolor(15, 0);
 		printf("%2d ", j + 2);
-		setcolor(0, 14);
+		setcolor(0, 6);
 		printf("├─");
 		for (int i = 0; i < size - 2; i++) printf("┼─");
 
 		printf("┤\n");
 		setcolor(15, 0);
 		printf("   ");
-		setcolor(0, 14);
+		setcolor(0, 6);
 		printf("│");
 		for (int i = 0; i < size - 1; i++) printf("　│");
 		printf("\n");
 	}
 	setcolor(15, 0);
 	printf("%2d ", size);
-	setcolor(0, 14);
+	setcolor(0, 6);
 	printf("└─");
 	for (int i = 0; i < size - 2; i++) printf("┴─");
 	printf("┘\n");
@@ -523,12 +525,12 @@ void print(POS p, int t)
 	playpos(p.x, p.y);
 	if (t == 1)
 	{
-		setcolor(15, 14);
+		setcolor(15, 6);
 		printf("●");
 	}
 	else
 	{
-		setcolor(0, 14);
+		setcolor(0, 6);
 		printf("●");
 	}
 
@@ -537,19 +539,56 @@ void print(POS p, int t)
 
 POS player(void)
 {
-	POS p;
-	gotoxy(0, map.size * 2);
-	printf("놓을곳을입력하세요:  \b\b");
-	string input;
-	cin >> input;
-	p.x = (input[0] & ~32) - 'A';
-	p.y = atoi(input.c_str()+1)-1;
-	//p.x = (p.x&~32) - 'A';
-	//p.y -= 1;
-	return p;
+	while (1)
+	{
+		POS p;
+		gotoxy(0, map.size * 2);
+		printf("놓을곳을입력하세요:     \b\b\b\b\b");
+		string input;
+		cin >> input;
+		p.x = (input[0] & ~32) - 'A';
+		p.y = atoi(input.c_str() + 1) - 1;
+		if (p.x < 0 || p.x >= map.size || p.y < 0 || p.y >= map.size) continue;
+		if (rule(&map, &p, -1)) continue;
+		return p;
+	}
+
 }
 
 bool PComp(const calc * const & a, const calc * const & b)
 {
 	return a->point > b->point;
+}
+bool rule(MAP * m, POS * p, int t)
+{
+	int count = 0;
+	int count_double = 0;
+	for (int i = -1; i <= 1; i++)
+	{
+		for (int j = -1; j <= 1; j++)
+		{
+			if (p->x - i >= 0 && p->x - i < m->size&&p->x + 3 * i >= 0 && p->x + 3 * i < m->size&&p->y - j >= 0 && p->y - j < m->size&&p->y + 3 * j >= 0 && p->y + 3 * j < m->size)
+			{
+				if (m->map[p->x - i][p->y - j] == 0 && m->map[p->x + i][p->y + j] == t && m->map[p->x + 2 * i][p->y + 2 * j] == t && m->map[p->x + 3 * i][p->y + 3 * j] == 0) count++; // oXxxo
+			}
+			if (p->x - i >= 0 && p->x - i < m->size&&p->x + 4 * i >= 0 && p->x + 4 * i < m->size&&p->y - j >= 0 && p->y - j < m->size&&p->y + 4 * j >= 0 && p->y + 4 * j < m->size)
+			{
+				if (m->map[p->x - i][p->y - j] == 0 && m->map[p->x + i][p->y + j] == t && m->map[p->x + 2 * i][p->y + 2 * j] == 0 && m->map[p->x + 3 * i][p->y + 3 * j] == t&&m->map[p->x + 4 * i][p->y + 4 * j] == 0) count++; // oXxoxo
+				if (m->map[p->x - i][p->y - j] == 0 && m->map[p->x + i][p->y + j] == 0 && m->map[p->x + 2 * i][p->y + 2 * j] == t && m->map[p->x + 3 * i][p->y + 3 * j] == t&&m->map[p->x + 4 * i][p->y + 4 * j] == 0) count++; // oXoxxo
+			}
+			if (p->x - 2 * i >= 0 && p->x - 2 * i < m->size&&p->x + 2 * i >= 0 && p->x + 2 * i < m->size&&p->y - 2 * j >= 0 && p->y - 2 * j < m->size&&p->y + 2 * j >= 0 && p->y + 2 * j < m->size)
+			{
+				if (m->map[p->x - 2 * i][p->y - 2 * j] == 0 && m->map[p->x - i][p->y - j] == t && m->map[p->x + i][p->y + j] == t && m->map[p->x + 2 * i][p->y + 2 * j] == 0) count_double++; // oxXxo
+			}
+			if (p->x - 2 * i >= 0 && p->x - 2 * i < m->size&&p->x + 3 * i >= 0 && p->x + 3 * i < m->size&&p->y - 2 * j >= 0 && p->y - 2 * j < m->size&&p->y + 3 * j >= 0 && p->y + 3 * j < m->size)
+			{
+				if (m->map[p->x - 2 * i][p->y - 2 * j] == 0 && m->map[p->x - i][p->y - j] == t && m->map[p->x + i][p->y + j] == 0 && m->map[p->x + 2 * i][p->y + 2 * j] == t && m->map[p->x + 3 * i][p->y + 3 * j] == 0) count++; //oxXoxo
+			}
+
+		}
+	}
+	count += count_double / 2;
+	if (count >= 2) return true;
+	return false;
+
 }

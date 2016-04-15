@@ -176,6 +176,7 @@ BundleArtifacts/
 !*.[Cc]ache/
 
 # Others
+*.db
 ClientBin/
 ~$*
 *~

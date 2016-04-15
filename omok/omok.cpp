@@ -322,18 +322,29 @@ int check(MAP *map)
 	{
 		for (int k = 0; k < map->size - 4; k++)
 		{
-			if (map->map[j][k] == map->map[1+j][1+k] && map->map[j][k] == map->map[2+j][2+k] && map->map[j][k] == map->map[3+j][3+k] && map->map[j][k] == map->map[4+j][4+k]) return map->map[j][k];
-			if (map->map[4+j][k] == map->map[3+j][1+k] && map->map[4+j][k] == map->map[2+j][2+k] && map->map[4+j][k] == map->map[1+j][3+k] && map->map[4+j][k] == map->map[j][4+k]) return map->map[4+j][k];
-			for (int i = 0; i < map->size; i++)
-			{
-				if (map->map[i+j][k] == map->map[i+j][1+k] && map->map[i+j][k] == map->map[i+j][2+k] && map->map[i+j][k] == map->map[i+j][3+k] && map->map[i+j][k] == map->map[i+j][4+k]) return map->map[i+j][k];
-				if (map->map[j][i+k] == map->map[1+j][i+k] && map->map[j][i+k] == map->map[2+j][i+k] && map->map[j][i+k] == map->map[3+j][i+k] && map->map[j][i+k] == map->map[4+j][i+k]) return map->map[j][i+k];
-
-			}
+			if (map->map[j][k]&&map->map[j][k] == map->map[1+j][1+k] && map->map[j][k] == map->map[2+j][2+k] && map->map[j][k] == map->map[3+j][3+k] && map->map[j][k] == map->map[4+j][4+k]) return map->map[j][k];
+			if (map->map[4 + j][k] &&map->map[4+j][k] == map->map[3+j][1+k] && map->map[4+j][k] == map->map[2+j][2+k] && map->map[4+j][k] == map->map[1+j][3+k] && map->map[4+j][k] == map->map[j][4+k]) return map->map[4+j][k];
 		}
 	}
-	
-	return 0;
+	for (int j = 0; j < map->size; j++)
+	{
+		for (int k = 0; k < map->size-4; k++)
+		{
+			if (map->map[j][k]&&map->map[j][k] == map->map[j][1 + k] && map->map[j][k] == map->map[j][2 + k] && map->map[j][k] == map->map[j][3 + k] && map->map[j][k] == map->map[j][4 + k]) return map->map[j][k];
+		}
+	}
+	for (int j = 0; j < map->size - 4; j++)
+	{
+		for (int k = 0; k < map->size; k++)
+		{
+				if (map->map[j][k]&&map->map[j][k] == map->map[1 + j][k] && map->map[j][k] == map->map[2 + j][k] && map->map[j][k] == map->map[3 + j][k] && map->map[j][k] == map->map[4 + j][k]) return map->map[j][k];
+		}
+	}
+	for (int i = 0; i < map->size; i++)
+		for (int j = 0; j < map->size; j++)
+			if (map->map[i][j] == 0) return 0;
+
+	return 3;
 }
 POS human(MAP map)
 {
@@ -345,7 +356,7 @@ int main(void)
 {
 
 	POS p;
-	map.init_map(15);
+	map.init_map(5);
 	char * setting = new char[100];
 	sprintf(setting, "mode con:cols=%d lines=%d", map.size * 4 + 4, map.size * 2 + 4);
 	system(setting);
@@ -377,9 +388,14 @@ int main(void)
 				cout << "AI win" << endl;
 				break;
 			}
-			else
+			else if(ch==-1)
 			{
 				cout << "Human win" << endl;
+				break;
+			}
+			else
+			{
+				cout <<"Draw!" << endl;
 				break;
 			}
 		}
@@ -401,15 +417,19 @@ int main(void)
 				cout << "AI win" << endl;
 				break;
 			}
+			else if (ch == -1)
+			{
+				cout << "Human win" << endl;
+				break;
+			}
 			else
 			{
-
-				cout << "Human win" << endl;
+				cout<<"Draw!"<<endl;
 				break;
 			}
 		}
 	}
-	system("pause");
+	//system("pause");
 	return 0;
 }
 

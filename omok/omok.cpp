@@ -7,6 +7,7 @@
 #include <Windows.h>
 #include <conio.h>
 #include <math.h>
+#include <string>
 
 #define MAX_STEP 2
 
@@ -356,7 +357,7 @@ int main(void)
 {
 
 	POS p;
-	map.init_map(5);
+	map.init_map(15);
 	char * setting = new char[100];
 	sprintf(setting, "mode con:cols=%d lines=%d", map.size * 4 + 4, map.size * 2 + 4);
 	system(setting);
@@ -399,11 +400,12 @@ int main(void)
 				break;
 			}
 		}
-		do
-		{
+		
+			while (1)
+			{
 			p = player();
-			if (map.map[p.x][p.y] != 0)continue;
-		} while (0);
+			if (map.map[p.x][p.y] == 0) break;
+		}
 
 		map.map[p.x][p.y] = -1;
 		print(p, -1);
@@ -538,10 +540,12 @@ POS player(void)
 	POS p;
 	gotoxy(0, map.size * 2);
 	printf("놓을곳을입력하세요:  \b\b");
-	char input[100];
-	scanf("%s", input);
+	string input;
+	cin >> input;
 	p.x = (input[0] & ~32) - 'A';
-	p.y = input[1] - '1';
+	p.y = atoi(input.c_str()+1)-1;
+	//p.x = (p.x&~32) - 'A';
+	//p.y -= 1;
 	return p;
 }
 

@@ -362,7 +362,7 @@ int main(void)
 	POS p;
 	map.init_map(5);
 	char * setting = new char[100];
-	sprintf(setting, "mode con:cols=%d lines=%d", map.size * 4 + 4, map.size * 2 + 4);
+	sprintf(setting, "mode con:cols=%d lines=%d", map.size * 4 + 4, map.size * 2 + 3);
 	system(setting);
 	setcursortype(NOCURSOR);
 	initMap(map.size);
@@ -413,7 +413,7 @@ int main(void)
 		ch = check(&map);
 		if (ch)
 		{
-			gotoxy(0, map.size * 2 + 1);
+			delTxt();
 			if (ch == 1)
 			{
 
@@ -550,7 +550,7 @@ POS player(void)
 		if (rule(&map, &p, -1) || p.x < 0 || p.x >= map.size || p.y < 0 || p.y >= map.size|| map.map[p.x][p.y] != 0)
 		{
 			delTxt();
-			cout << "You can not put there. Retry." << endl;
+			cout << "You can not put there.\nRetry." << endl;
 			continue;
 		}
 		return p;
@@ -599,11 +599,11 @@ bool rule(MAP * m, POS * p, int t)
 void delTxt(void)
 {
 	gotoxy(0, map.size * 2);
-	for (int i = 0; i < map.size * 4 + 4; i++) cout << ' ';
+	for (int i = 0; i < map.size * 4 + 3; i++) cout << ' ';
 	cout << endl;
-	for (int i = 0; i <map.size * 4 + 4; i++) cout << ' ';
+	for (int i = 0; i <map.size * 4 + 3; i++) cout << ' ';
 	cout << endl;
-	for (int i = 0; i <map.size * 4 + 4; i++) cout << ' ';
+	for (int i = 0; i <map.size * 4 + 3; i++) cout << ' ';
 	gotoxy(0, map.size * 2);
 	return;
 }

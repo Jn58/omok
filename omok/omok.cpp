@@ -8,14 +8,19 @@
 #include <conio.h>
 #include <math.h>
 #include <string>
+#include <thread>
+#include <mutex>
 
-#define MAX_STEP 2
+
+#define MAX_STEP 3
+#define THREAD 4
 
 using namespace std;
 
 typedef enum { NOCURSOR, SOLIDCURSOR, NORMALCURSOR } CURSOR_TYPE;
 
 class calc;
+mutex mut;
 
 struct POS
 {
@@ -132,10 +137,10 @@ public:
 		evaluatePoint();
 		//map->print();
 	}
-	void work()
+	void work(mutex * m)
 	{
 
-		makeChild(step + 1);
+		makeChild(step + 1,m);
 		delete map;
 	}
 	void updatePoint(double add)
@@ -202,7 +207,7 @@ public:
 		}
 		updatePoint(sum*turn / (pow(step, 4)));
 	}
-	void makeChild(int c);
+	void makeChild(int c,mutex * m);
 	void possiblePosition(void)
 	{
 		queue<POS> temp_Q;
@@ -302,7 +307,7 @@ public:
 
 queue<calc*> toDo;
 
-void calc::makeChild(int c)
+void calc::makeChild(int c,mutex * m)
 {
 	if (c > MAX_STEP) return;
 	possiblePosition();
@@ -312,7 +317,9 @@ void calc::makeChild(int c)
 		posQ.pop();
 		if (rule(map, &childPos, turn)) continue;
 		calc* child = new calc(this, *map, childPos, turn*-1, step + 1);
+		m->lock();
 		toDo.push(child);
+		m->unlock();
 		this->child.push_back(child);
 	}
 
@@ -353,12 +360,14 @@ POS human(MAP map)
 {
 	return{ 2,2 };
 }
+void threadWork(queue<calc*>* toDo,mutex * m);
 
 MAP map;
 int main(void)
 {
 
 	POS p;
+	thread ** devideWork = new thread*[THREAD];
 	map.init_map(15);
 	char * setting = new char[100];
 	sprintf(setting, "mode con:cols=%d lines=%d", map.size * 4 + 4, map.size * 2 + 4);
@@ -369,14 +378,24 @@ int main(void)
 	{
 		int ch;
 		calc *ai = new calc(map, -1, 0);
+		
 		gotoxy(0, map.size * 2);
 		cout << "¿¬»êÁß...                " << endl;
-		ai->work();
-		while (!toDo.empty())
+		ai->work(&mut);
+		
+		for (int i = 0; i < THREAD; i++)
 		{
-			calc *temp = toDo.front();
-			toDo.pop();
-			temp->work();
+			devideWork[i] = new thread(&threadWork, &toDo,&mut);
+			Sleep(10);
+			
+		}
+		for (int i = 0; i < THREAD; i++)
+		{
+			devideWork[i]->join();
+		}
+		for (int i = 0; i < THREAD; i++)
+		{
+			delete devideWork[i];
 		}
 		p = ai->nextPOS();
 		print(p, 1);
@@ -591,4 +610,15 @@ bool rule(MAP * m, POS * p, int t)
 	if (count >= 2) return true;
 	return false;
 
+}
+void threadWork(queue<calc*>* toDo, mutex * m)
+{
+	while(!toDo->empty())
+	{
+		m->lock();
+		calc *temp = toDo->front();
+		toDo->pop();
+		m->unlock();
+		if(temp) temp->work(m);
+	}
 }

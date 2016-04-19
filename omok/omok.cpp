@@ -10,10 +10,12 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <stack>
 
 
-#define MAX_STEP 3
+#define MAX_STEP 2
 #define THREAD 4
+#define MAP_SIZE 15
 
 using namespace std;
 
@@ -305,7 +307,7 @@ public:
 
 };
 
-queue<calc*> toDo;
+stack<calc*> toDo;
 
 void calc::makeChild(int c,mutex * m)
 {
@@ -360,7 +362,7 @@ POS human(MAP map)
 {
 	return{ 2,2 };
 }
-void threadWork(queue<calc*>* toDo,mutex * m);
+void threadWork(stack<calc*>* toDo,mutex * m);
 
 MAP map;
 int main(void)
@@ -368,7 +370,7 @@ int main(void)
 
 	POS p;
 	thread ** devideWork = new thread*[THREAD];
-	map.init_map(15);
+	map.init_map(MAP_SIZE);
 	char * setting = new char[100];
 	sprintf(setting, "mode con:cols=%d lines=%d", map.size * 4 + 4, map.size * 2 + 4);
 	system(setting);
@@ -386,7 +388,6 @@ int main(void)
 		for (int i = 0; i < THREAD; i++)
 		{
 			devideWork[i] = new thread(&threadWork, &toDo,&mut);
-			Sleep(10);
 			
 		}
 		for (int i = 0; i < THREAD; i++)
@@ -611,14 +612,16 @@ bool rule(MAP * m, POS * p, int t)
 	return false;
 
 }
-void threadWork(queue<calc*>* toDo, mutex * m)
+void threadWork(stack<calc*>* toDo, mutex * m)
 {
-	while(!toDo->empty())
+	while(1)
 	{
 		m->lock();
-		calc *temp = toDo->front();
+		if (toDo->empty())break;
+		calc *temp = toDo->top();
 		toDo->pop();
 		m->unlock();
 		if(temp) temp->work(m);
 	}
+	m->unlock();
 }

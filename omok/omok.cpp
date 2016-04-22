@@ -362,17 +362,22 @@ POS human(MAP map)
 {
 	return{ 2,2 };
 }
+
 void threadWork(stack<calc*>* toDo,mutex * m);
+
+void delTxt(void);
+
 
 MAP map;
 int main(void)
 {
 
 	POS p;
+
 	thread ** devideWork = new thread*[THREAD];
 	map.init_map(MAP_SIZE);
 	char * setting = new char[100];
-	sprintf(setting, "mode con:cols=%d lines=%d", map.size * 4 + 4, map.size * 2 + 4);
+	sprintf(setting, "mode con:cols=%d lines=%d", map.size * 4 + 4, map.size * 2 + 3);
 	system(setting);
 	setcursortype(NOCURSOR);
 	initMap(map.size);
@@ -380,9 +385,9 @@ int main(void)
 	{
 		int ch;
 		calc *ai = new calc(map, -1, 0);
-		
-		gotoxy(0, map.size * 2);
-		cout << "연산중...                " << endl;
+
+		delTxt();
+		cout << "AI is thinking..." << endl;
 		ai->work(&mut);
 		
 		for (int i = 0; i < THREAD; i++)
@@ -405,7 +410,7 @@ int main(void)
 		ch = check(&map);
 		if (ch)
 		{
-			gotoxy(0, map.size * 2 + 1);
+			delTxt();
 			if (ch == 1)
 			{
 				cout << "AI win" << endl;
@@ -423,18 +428,16 @@ int main(void)
 			}
 		}
 
-		while (1)
-		{
+		
 			p = player();
-			if (map.map[p.x][p.y] == 0) break;
-		}
+			
 
 		map.map[p.x][p.y] = -1;
 		print(p, -1);
 		ch = check(&map);
 		if (ch)
 		{
-			gotoxy(0, map.size * 2 + 1);
+			delTxt();
 			if (ch == 1)
 			{
 
@@ -545,12 +548,12 @@ void print(POS p, int t)
 	playpos(p.x, p.y);
 	if (t == 1)
 	{
-		setcolor(15, 6);
+		setcolor(0, 6);
 		printf("●");
 	}
 	else
 	{
-		setcolor(0, 6);
+		setcolor(15, 6);
 		printf("●");
 	}
 
@@ -559,17 +562,21 @@ void print(POS p, int t)
 
 POS player(void)
 {
+	delTxt();
 	while (1)
 	{
 		POS p;
-		gotoxy(0, map.size * 2);
-		printf("놓을곳을입력하세요:     \b\b\b\b\b");
+		printf("Enter position:");
 		string input;
 		cin >> input;
 		p.x = (input[0] & ~32) - 'A';
 		p.y = atoi(input.c_str() + 1) - 1;
-		if (p.x < 0 || p.x >= map.size || p.y < 0 || p.y >= map.size) continue;
-		if (rule(&map, &p, -1)) continue;
+		if (rule(&map, &p, -1) || p.x < 0 || p.x >= map.size || p.y < 0 || p.y >= map.size|| map.map[p.x][p.y] != 0)
+		{
+			delTxt();
+			cout << "You can not put there.\nRetry." << endl;
+			continue;
+		}
 		return p;
 	}
 
@@ -614,14 +621,27 @@ bool rule(MAP * m, POS * p, int t)
 }
 void threadWork(stack<calc*>* toDo, mutex * m)
 {
-	while(1)
+	while (1)
 	{
 		m->lock();
 		if (toDo->empty())break;
 		calc *temp = toDo->top();
 		toDo->pop();
 		m->unlock();
-		if(temp) temp->work(m);
+		if (temp) temp->work(m);
 	}
 	m->unlock();
+}
+
+void delTxt(void)
+{
+	gotoxy(0, map.size * 2);
+	for (int i = 0; i < map.size * 4 + 3; i++) cout << ' ';
+	cout << endl;
+	for (int i = 0; i <map.size * 4 + 3; i++) cout << ' ';
+	cout << endl;
+	for (int i = 0; i <map.size * 4 + 3; i++) cout << ' ';
+	gotoxy(0, map.size * 2);
+	return;
+
 }

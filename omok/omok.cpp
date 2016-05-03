@@ -62,6 +62,10 @@ public:
 		{
 			map[i] = new int[size];
 		}
+		
+	}
+	void del_map(void)
+	{
 		for (int i = 0; i < size; i++)
 			for (int j = 0; j < size; j++)
 				map[i][j] = 0;
@@ -260,51 +264,63 @@ public:
 			posQ.push(temp);
 			return;
 		}
-
+		MAP temp_map;
+		temp_map.init_map(map->size);
+		temp_map.del_map();
+		
 		while (!temp_Q.empty())
 		{
 			POS temp_pos = temp_Q.front();
 			temp_Q.pop();
-			for (int i = 1; i < 3; i++)
+			for (int i = 1; i < 5; i++)
 			{
 				if (temp_pos.y - i >= 0)
 				{
-					if (map->map[temp_pos.x][temp_pos.y - i] == 0)  posQ.push({ temp_pos.x,temp_pos.y - i });
+					if (map->map[temp_pos.x][temp_pos.y - i] == 0)  temp_map.map[temp_pos.x][temp_pos.y - i] = 1;
 				}
 				if (temp_pos.y + i < map->size)
 				{
-					if (map->map[temp_pos.x][temp_pos.y + i] == 0)  posQ.push({ temp_pos.x,temp_pos.y + i });
+					if (map->map[temp_pos.x][temp_pos.y + i] == 0)  temp_map.map[temp_pos.x][temp_pos.y + i] = 1;
 				}
 
 				if (temp_pos.x + i < map->size)
 				{
-					if (map->map[temp_pos.x + i][temp_pos.y] == 0)  posQ.push({ temp_pos.x + i,temp_pos.y });
+					if (map->map[temp_pos.x + i][temp_pos.y] == 0) temp_map.map[temp_pos.x + i][temp_pos.y] = 1; 
 
 					if (temp_pos.y - i >= 0)
 					{
-						if (map->map[temp_pos.x + i][temp_pos.y - i] == 0)  posQ.push({ temp_pos.x + i,temp_pos.y - i });
+						if (map->map[temp_pos.x + i][temp_pos.y - i] == 0)  temp_map.map[temp_pos.x + i][temp_pos.y - i] = 1; 
 					}
 					if (temp_pos.y + i < map->size)
 					{
-						if (map->map[temp_pos.x + i][temp_pos.y + i] == 0)  posQ.push({ temp_pos.x + i,temp_pos.y + i });
+						if (map->map[temp_pos.x + i][temp_pos.y + i] == 0)  temp_map.map[temp_pos.x + i][temp_pos.y + i] = 1;
 					}
 				}
 				if (temp_pos.x - i >= 0)
 				{
 
-					if (map->map[temp_pos.x - i][temp_pos.y] == 0)  posQ.push({ temp_pos.x - i,temp_pos.y });
+					if (map->map[temp_pos.x - i][temp_pos.y] == 0)  temp_map.map[temp_pos.x - i][temp_pos.y] = 1;
 					if (temp_pos.y - i >= 0)
 					{
-						if (map->map[temp_pos.x - i][temp_pos.y - i] == 0)  posQ.push({ temp_pos.x - i,temp_pos.y - i });
+						if (map->map[temp_pos.x - i][temp_pos.y - i] == 0)  temp_map.map[temp_pos.x - i][temp_pos.y-i] = 1;
 					}
 					if (temp_pos.y + i < map->size)
 					{
-						if (map->map[temp_pos.x - i][temp_pos.y + i] == 0)  posQ.push({ temp_pos.x - i,temp_pos.y + i });
+						if (map->map[temp_pos.x - i][temp_pos.y + i] == 0)  temp_map.map[temp_pos.x - i][temp_pos.y+i] = 1;
 					}
 				}
 			}
 		}
-
+		for (int i = 0; i < map->size; i++) {
+			for (int j = 0; j < map->size; j++)
+			{
+				if (temp_map.map[i][j] == 1)
+				{
+					POS temp = { i,j };
+					posQ.push(temp);
+				}
+			}
+		}
 	}
 	POS nextPOS(void)
 	{
@@ -404,7 +420,8 @@ int main(void)
 
 	thread ** devideWork = new thread*[THREAD];
 	map.init_map(MAP_SIZE);
-	setting << "mode con:cols=" << map.size * 4 + 10 << " lines=" << map.size * 2 + 3;
+	map.del_map();
+	setting << "mode con:cols=" << map.size * 4 + 16 << " lines=" << map.size * 2 + 4;
 	
 	system(setting.str().c_str());
 	setcursortype(NOCURSOR);

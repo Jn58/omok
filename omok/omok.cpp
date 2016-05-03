@@ -569,8 +569,9 @@ void initMap(int size)
 	setcolor(0, 6);
 	printf("¦£¦¡");
 	for (int i = 0; i < size - 2; i++) printf("¦¨¦¡");
-	printf("¦¤1\n");
+	printf("¦¤");
 	setcolor(15, 0);
+	cout << 1 << endl;
 	printf("   ");
 	setcolor(0, 6);
 	printf("¦¢");
@@ -584,8 +585,9 @@ void initMap(int size)
 		printf("¦§¦¡");
 		for (int i = 0; i < size - 2; i++) printf("¦«¦¡");
 
-		printf("¦©\n");
+		printf("¦©");
 		setcolor(15, 0);
+		cout << j + 2<<endl;
 		printf("   ");
 		setcolor(0, 6);
 		printf("¦¢");
@@ -597,8 +599,15 @@ void initMap(int size)
 	setcolor(0, 6);
 	printf("¦¦¦¡");
 	for (int i = 0; i < size - 2; i++) printf("¦ª¦¡");
-	printf("¦¥\n");
+	printf("¦¥");
 	setcolor(15, 0);
+	cout << size << endl;
+	setcolor(15, 0);
+	printf("   A ");
+	for (int i = 0; i < size - 1; i++)
+	{
+		printf("  %c ", i + 'B');
+	}
 
 }
 void print(POS p, int t)
@@ -694,13 +703,13 @@ void threadWork(stack<calc*>* toDo, mutex * m)
 
 void delTxt(void)
 {
-	gotoxy(0, map.size * 2);
+	gotoxy(0, map.size * 2+1);
 	for (int i = 0; i < map.size * 4 + 3; i++) cout << ' ';
 	cout << endl;
 	for (int i = 0; i <map.size * 4 + 3; i++) cout << ' ';
 	cout << endl;
 	for (int i = 0; i <map.size * 4 + 3; i++) cout << ' ';
-	gotoxy(0, map.size * 2);
+	gotoxy(0, map.size * 2+1);
 	return;
 
 }

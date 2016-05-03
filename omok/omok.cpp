@@ -332,8 +332,8 @@ public:
 		}
 		else
 		{
-			child.front()->child.sort();
-			return child.front()->child.front()->pos;
+
+			return child.back()->pos;
 		}
 
 	}

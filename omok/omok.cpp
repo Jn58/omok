@@ -11,10 +11,14 @@
 #include <thread>
 #include <mutex>
 #include <stack>
+#include <sstream>
+#include <ctime>
+#include "gotoxy.h"
+#include "timer.h"
 
 
 #define MAX_STEP 2
-#define THREAD 4
+#define THREAD int(thread::hardware_concurrency())+1
 #define MAP_SIZE 15
 
 using namespace std;
@@ -24,12 +28,13 @@ typedef enum { NOCURSOR, SOLIDCURSOR, NORMALCURSOR } CURSOR_TYPE;
 class calc;
 mutex mut;
 
+
+
 struct POS
 {
 	int x, y;
 };
 
-void gotoxy(int x, int y);
 
 void setcursortype(CURSOR_TYPE c);
 
@@ -71,6 +76,14 @@ public:
 		for (int i = 0; i < size; i++)
 			for (int j = 0; j < size; j++)
 				map[i][j] = parent.map[i][j];
+
+	}
+	MAP(MAP const * const parent)
+	{
+		init_map(parent->size);
+		for (int i = 0; i < size; i++)
+			for (int j = 0; j < size; j++)
+				map[i][j] = parent->map[i][j];
 
 	}
 	void print()
@@ -129,6 +142,23 @@ public:
 		step = s;
 	}
 	calc(calc  *par, MAP m, POS p, int t, int s)
+	{
+		parent = par;
+		map = new MAP(m);
+		pos = p;
+		turn = t;
+		step = s;
+		map->map[p.x][p.y] = t;
+		evaluatePoint();
+		//map->print();
+	}
+	calc(const MAP * const m,  int  t, const int s)
+	{
+		map = new MAP(m);
+		turn = t;
+		step = s;
+	}
+	calc(calc  *par, const MAP * const m, POS p, int t, int s)
 	{
 		parent = par;
 		map = new MAP(m);
@@ -231,14 +261,11 @@ public:
 			return;
 		}
 
-		MAP temp_map;
-		temp_map.init_map(map->size);
-
 		while (!temp_Q.empty())
 		{
 			POS temp_pos = temp_Q.front();
 			temp_Q.pop();
-			for (int i = 1; i < 5; i++)
+			for (int i = 1; i < 3; i++)
 			{
 				if (temp_pos.y - i >= 0)
 				{
@@ -318,7 +345,7 @@ void calc::makeChild(int c,mutex * m)
 		POS childPos = posQ.front();
 		posQ.pop();
 		if (rule(map, &childPos, turn)) continue;
-		calc* child = new calc(this, *map, childPos, turn*-1, step + 1);
+		calc* child = new calc(this, map, childPos, turn*-1, step + 1);
 		m->lock();
 		toDo.push(child);
 		m->unlock();
@@ -328,7 +355,7 @@ void calc::makeChild(int c,mutex * m)
 }
 
 
-int check(MAP *map)
+int check(const MAP * const map)
 {
 	for (int j = 0; j < map->size - 4; j++)
 	{
@@ -358,10 +385,6 @@ int check(MAP *map)
 
 	return 3;
 }
-POS human(MAP map)
-{
-	return{ 2,2 };
-}
 
 void threadWork(stack<calc*>* toDo,mutex * m);
 
@@ -369,31 +392,38 @@ void delTxt(void);
 
 
 MAP map;
+
+
+
 int main(void)
 {
 
 	POS p;
+	ostringstream setting;
+	TIMER *timer;
 
 	thread ** devideWork = new thread*[THREAD];
 	map.init_map(MAP_SIZE);
-	char * setting = new char[100];
-	sprintf(setting, "mode con:cols=%d lines=%d", map.size * 4 + 4, map.size * 2 + 3);
-	system(setting);
+	setting << "mode con:cols=" << map.size * 4 + 10 << " lines=" << map.size * 2 + 3;
+	
+	system(setting.str().c_str());
 	setcursortype(NOCURSOR);
 	initMap(map.size);
+	timer = new TIMER(map.size);
 	while (1)
 	{
 		int ch;
-		calc *ai = new calc(map, -1, 0);
+		calc *ai = new calc(&map, -1, 0);
 
 		delTxt();
 		cout << "AI is thinking..." << endl;
+		timer->start();
 		ai->work(&mut);
 		
 		for (int i = 0; i < THREAD; i++)
 		{
-			devideWork[i] = new thread(&threadWork, &toDo,&mut);
-			
+			devideWork[i] = new thread(&threadWork, &toDo, &mut);
+
 		}
 		for (int i = 0; i < THREAD; i++)
 		{
@@ -403,10 +433,15 @@ int main(void)
 		{
 			delete devideWork[i];
 		}
+		
+		timer->end();
 		p = ai->nextPOS();
 		print(p, 1);
+
 		map.map[p.x][p.y] = 1;
 		delete ai;
+		timer->print_time();
+		
 		ch = check(&map);
 		if (ch)
 		{
@@ -462,11 +497,7 @@ int main(void)
 
 
 
-void gotoxy(int x, int y)
-{
-	COORD pos = { x,y };
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
-}
+
 void setcursortype(CURSOR_TYPE c)
 {
 	CONSOLE_CURSOR_INFO CurInfo;
@@ -510,7 +541,7 @@ void initMap(int size)
 	setcolor(0, 6);
 	printf("¦£¦¡");
 	for (int i = 0; i < size - 2; i++) printf("¦¨¦¡");
-	printf("¦¤\n");
+	printf("¦¤1\n");
 	setcolor(15, 0);
 	printf("   ");
 	setcolor(0, 6);
@@ -645,3 +676,4 @@ void delTxt(void)
 	return;
 
 }
+

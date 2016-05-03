@@ -373,33 +373,80 @@ void calc::makeChild(int c,mutex * m)
 
 int check(const MAP * const map)
 {
-	int j, k;	
+	int j, k;
 
 	for (j = 0; j < map->size - 4; j++) // 대각선
 	{
 		for (k = 0; k < map->size - 4; k++)
 		{
-			if (map->map[j][k] && ((j == 0 || k == 0) || (map->map[j][k] != map->map[j - 1][k - 1])) && ((j == map->size - 5 || k == map->size - 5) || (map->map[j][k] != map->map[j + 5][k + 5])) && map->map[j][k] != map->map[j-1][k-1] && map->map[j][k] == map->map[1 + j][1 + k] && map->map[j][k] == map->map[2 + j][2 + k] && map->map[j][k] == map->map[3 + j][3 + k] && map->map[j][k] == map->map[4 + j][4 + k] ) return map->map[j][k];
-			if (map->map[4 + j][k] && ((j == map->size - 5 || k == 0) || (map->map[j + 4][k] != map->map[j + 5][k - 1])) && ((j == 0 || k == map->size - 5) || (map->map[j + 4][k] != map->map[j - 1][k + 5])) && map->map[4 + j][k] != map->map[5 + j][k - 1] && map->map[4 + j][k] == map->map[3 + j][1 + k] && map->map[4 + j][k] == map->map[2 + j][2 + k] && map->map[4 + j][k] == map->map[1 + j][3 + k] && map->map[4 + j][k] == map->map[j][4 + k]) return map->map[4 + j][k];
+			if (map->map[j][k] && map->map[j][k] == map->map[1 + j][1 + k] && map->map[j][k] == map->map[2 + j][2 + k] && map->map[j][k] == map->map[3 + j][3 + k] && map->map[j][k] == map->map[4 + j][4 + k])
+			{
+				if (j == map->size - 5 && k == 0)
+				{
+					return map->map[j][k];
+				}
+				else if (j == 0 && k == map->size - 5)
+				{
+					return map->map[j][k];
+				}
+				if (j == 0 || k == 0)
+				{
+					if (map->map[j][k] != map->map[j + 5][k + 5]) return map->map[j][k];
+				}
+				else if (j == map->size - 5 || k == map->size - 5)
+				{
+					if (map->map[j][k] != map->map[j - 1][k - 1]) return map->map[j][k];
+				}
+				else
+				{
+					if ((map->map[j][k] != map->map[j + 5][k + 5]) && (map->map[j][k] != map->map[j - 1][k - 1])) return map->map[j][k];
+
+				}
+			}
+			if (map->map[4 + j][k] && map->map[4 + j][k] == map->map[3 + j][1 + k] && map->map[4 + j][k] == map->map[2 + j][2 + k] && map->map[4 + j][k] == map->map[1 + j][3 + k] && map->map[4 + j][k] == map->map[j][4 + k])
+			{
+				if (j == 0 && k == 0)
+				{
+					return map->map[4 + j][k];
+				}
+				else if (j == map->size - 5 && k == map->size - 5)
+				{
+					return map->map[4 + j][k];
+				}
+				else if (j == 0 || k == map->size - 5)
+				{
+					if (map->map[4 + j][k] != map->map[j + 5][k - 1]) return map->map[4 + j][k];
+				}
+				else if (j == map->size - 5 || k == 0)
+				{
+					if (map->map[4 + j][k] != map->map[j - 1][k + 5]) return map->map[4 + j][k];
+				}
+				else
+				{
+					if ((map->map[4 + j][k] != map->map[j + 5][k - 1]) && (map->map[4 + j][k] != map->map[j - 1][k + 5])) return map->map[4 + j][k];
+
+				}
+			}
 		}
 	}
-	
-	
 
 
-	for (j = 0,k=0; j < map->size; j++,k=0) // y축 방향
+
+
+
+	for (j = 0, k = 0; j < map->size; j++, k = 0) // y축 방향
 	{
 		if (map->map[j][k] && map->map[j][k] == map->map[j][1 + k] && map->map[j][k] == map->map[j][2 + k] && map->map[j][k] == map->map[j][3 + k] && map->map[j][k] == map->map[j][4 + k] && map->map[j][k] != map->map[j][5 + k]) return map->map[j][k];
 		for (k = 1; k < map->size - 5; k++)
 		{
-			if (map->map[j][k] && map->map[j][k]!= map->map[j][k-1]&& map->map[j][k] == map->map[j][1 + k] && map->map[j][k] == map->map[j][2 + k] && map->map[j][k] == map->map[j][3 + k] && map->map[j][k] == map->map[j][4 + k]&& map->map[j][k]!= map->map[j][5+k]) return map->map[j][k];
+			if (map->map[j][k] && map->map[j][k] != map->map[j][k - 1] && map->map[j][k] == map->map[j][1 + k] && map->map[j][k] == map->map[j][2 + k] && map->map[j][k] == map->map[j][3 + k] && map->map[j][k] == map->map[j][4 + k] && map->map[j][k] != map->map[j][5 + k]) return map->map[j][k];
 		}
 		if (map->map[j][k] && map->map[j][k] != map->map[j][k - 1] && map->map[j][k] == map->map[j][1 + k] && map->map[j][k] == map->map[j][2 + k] && map->map[j][k] == map->map[j][3 + k] && map->map[j][k] == map->map[j][4 + k]) return map->map[j][k];
 	}
-	for (k = 0,j=0; k < map->size; k++,j=0) //x축 방향
+	for (k = 0, j = 0; k < map->size; k++, j = 0) //x축 방향
 	{
 		if (map->map[j][k] && map->map[j][k] == map->map[1 + j][k] && map->map[j][k] == map->map[2 + j][k] && map->map[j][k] == map->map[3 + j][k] && map->map[j][k] == map->map[4 + j][k] && map->map[j][k] != map->map[5 + j][k]) return map->map[j][k];
-		for (j= 1; j < map->size-5; j++)
+		for (j = 1; j < map->size - 5; j++)
 		{
 			if (map->map[j][k] && map->map[j][k] != map->map[j - 1][k] && map->map[j][k] == map->map[1 + j][k] && map->map[j][k] == map->map[2 + j][k] && map->map[j][k] == map->map[3 + j][k] && map->map[j][k] == map->map[4 + j][k] && map->map[j][k] != map->map[5 + j][k]) return map->map[j][k];
 		}

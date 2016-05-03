@@ -17,7 +17,7 @@
 #include "timer.h"
 
 
-#define MAX_STEP 2
+#define MAX_STEP 1
 #define THREAD int(thread::hardware_concurrency())+1
 #define MAP_SIZE 15
 
@@ -176,7 +176,7 @@ public:
 	void work(mutex * m)
 	{
 
-		makeChild(step + 1,m);
+		makeChild(m);
 		delete map;
 	}
 	void updatePoint(double add)
@@ -243,7 +243,7 @@ public:
 		}
 		updatePoint(sum*turn / (pow(step, 4)));
 	}
-	void makeChild(int c,mutex * m);
+	void makeChild(mutex * m);
 	void possiblePosition(void)
 	{
 		queue<POS> temp_Q;
@@ -352,9 +352,9 @@ public:
 
 stack<calc*> toDo;
 
-void calc::makeChild(int c,mutex * m)
+void calc::makeChild(mutex * m)
 {
-	if (c > MAX_STEP) return;
+	if (step > MAX_STEP) return;
 	possiblePosition();
 	while (!posQ.empty())
 	{
@@ -478,7 +478,7 @@ int main(void)
 	thread ** devideWork = new thread*[THREAD];
 	map.init_map(MAP_SIZE);
 	map.del_map();
-	setting << "mode con:cols=" << map.size * 4 + 16 << " lines=" << map.size * 2 + 4;
+	setting << "mode con:cols=" << map.size * 4 + 4 << " lines=" << map.size * 2 + 6;
 	
 	system(setting.str().c_str());
 	setcursortype(NOCURSOR);
@@ -487,7 +487,8 @@ int main(void)
 	while (1)
 	{
 		int ch;
-		calc *ai = new calc(&map, -1, 0);
+		calc *ai;
+		ai = new calc(&map, -1, 0);
 
 		delTxt();
 		cout << "AI is thinking..." << endl;
@@ -514,8 +515,8 @@ int main(void)
 
 		map.map[p.x][p.y] = 1;
 		delete ai;
-		timer->print_time();
-		if (timer->time() >= 1) exit(0);
+		//timer->print_time();
+		//if (timer->time() >= 1) exit(0);
 		
 		ch = check(&map);
 		if (ch)

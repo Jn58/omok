@@ -15,6 +15,8 @@
 #include <ctime>
 #include "gotoxy.h"
 #include "timer.h"
+#include <iomanip>
+#include <fstream>
 
 
 #define MAX_STEP 1
@@ -360,7 +362,7 @@ void calc::makeChild(mutex * m)
 	{
 		POS childPos = posQ.front();
 		posQ.pop();
-		if (rule(map, &childPos, turn)) continue;
+		if (rule(map, &childPos, turn*-1)) continue;
 		calc* child = new calc(this, map, childPos, turn*-1, step + 1);
 		m->lock();
 		toDo.push(child);
@@ -465,7 +467,7 @@ void delTxt(void);
 
 
 MAP map;
-
+ofstream file;
 
 
 int main(void)
@@ -478,12 +480,23 @@ int main(void)
 	thread ** devideWork = new thread*[THREAD];
 	map.init_map(MAP_SIZE);
 	map.del_map();
+	time_t rawtime;
+	struct tm * timeinfo;
+
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
 	setting << "mode con:cols=" << map.size * 4 + 4 << " lines=" << map.size * 2 + 6;
 	
 	system(setting.str().c_str());
 	setcursortype(NOCURSOR);
+	setting.str(string());
+	
+	setting << "omok_" << timeinfo->tm_year+1900 << '-' << setw(2) << setfill('0') << timeinfo->tm_mon+1 << '-' << setw(2) << setfill('0') << timeinfo->tm_mday << '-' << setw(2) << setfill('0') << timeinfo->tm_hour << '-' << setw(2) << setfill('0') << timeinfo->tm_min << '-' << setw(2) << setfill('0') << timeinfo->tm_sec<<".txt";
+	file.open(setting.str());
+
 	initMap(map.size);
 	timer = new TIMER(map.size);
+	
 	while (1)
 	{
 		int ch;
@@ -516,7 +529,14 @@ int main(void)
 		map.map[p.x][p.y] = 1;
 		delete ai;
 		//timer->print_time();
-		//if (timer->time() >= 1) exit(0);
+		if (timer->time() >= 1)
+		{
+			delTxt();
+			std::cout << "AI time out";
+			file << "AI time out";
+			file.close();
+			exit(0);
+		}
 		
 		ch = check(&map);
 		if (ch)
@@ -525,16 +545,19 @@ int main(void)
 			if (ch == 1)
 			{
 				cout << "AI win" << endl;
+				file << "AI win" << endl;
 				break;
 			}
 			else if (ch == -1)
 			{
 				cout << "Human win" << endl;
+				file << "Human win" << endl;
 				break;
 			}
 			else
 			{
 				cout << "Draw!" << endl;
+				file << "Draw!" << endl;
 				break;
 			}
 		}
@@ -551,22 +574,25 @@ int main(void)
 			delTxt();
 			if (ch == 1)
 			{
-
 				cout << "AI win" << endl;
+				file << "AI win" << endl;
 				break;
 			}
 			else if (ch == -1)
 			{
 				cout << "Human win" << endl;
+				file << "Human win" << endl;
 				break;
 			}
 			else
 			{
 				cout << "Draw!" << endl;
+				file << "Draw!" << endl;
 				break;
 			}
 		}
 	}
+	file.close();
 	system("pause");
 	return 0;
 }
@@ -674,6 +700,8 @@ void print(POS p, int t)
 	}
 
 	setcolor(15, 0);
+	file << ((t==1)?("AI "):("HM ")) << char(p.x + 'A') << p.y + 1 << endl;
+
 }
 
 POS player(void)
@@ -730,9 +758,16 @@ bool rule(MAP * m, POS * p, int t)
 
 		}
 	}
-	count += count_double / 2;
-	if (count >= 2) return true;
-	return false;
+	count += (count_double / 2);
+	if (count >= 2)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+	
 
 }
 void threadWork(stack<calc*>* toDo, mutex * m)

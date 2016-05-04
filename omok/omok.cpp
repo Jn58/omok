@@ -360,7 +360,7 @@ void calc::makeChild(mutex * m)
 	{
 		POS childPos = posQ.front();
 		posQ.pop();
-		if (rule(map, &childPos, turn)) continue;
+		if (rule(map, &childPos, turn*-1)) continue;
 		calc* child = new calc(this, map, childPos, turn*-1, step + 1);
 		m->lock();
 		toDo.push(child);
@@ -730,9 +730,15 @@ bool rule(MAP * m, POS * p, int t)
 
 		}
 	}
-	count += count_double / 2;
-	if (count >= 2) return true;
-	return false;
+	count += (count_double / 2);
+	if (count >= 2)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 
 }
 void threadWork(stack<calc*>* toDo, mutex * m)

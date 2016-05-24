@@ -4,6 +4,7 @@
 #include <queue>
 #include <stack>
 #include <mutex>
+#include <thread>
 #include "MAP.h"
 struct POS
 {
@@ -12,26 +13,31 @@ struct POS
 class calc
 {
 public:
-	calc* parent = NULL;
+	calc* parent;
 	std::list<calc*> child;
-	MAP * map = NULL;
-	int turn = 0;
-	POS position = { 0,0 };
-	double point = 0;
-	int step = 0;
+	MAP * map;
+	int turn;
+	POS position;
+	double point;
+	int step;
 	std::mutex mutex;
 
 	calc();
-	calc(MAP * const map, const int  turn, const int step, calc  *parent, POS position);
+	calc(MAP *  map, int  turn, int step, POS position);
+	calc(MAP *  map,  int  turn,  int step, POS position, calc  *parent );
+
+	calc(MAP  *map, POS position);
 	~calc();
 	bool operator<(const calc & other);
 	static bool compare(const calc * const & a, const calc * const & b);
 	bool rule(MAP * m, POS * p, int t);
 	void updatePoint(double add);
 	void evaluatePoint(void);
-	void possiblePosition(POS * posQ);
+	void possiblePosition(std::queue<POS> * posQ);
 	void makeChild(std::mutex * toDoMutex, std::stack<calc *> * toDo);
 	void work(std::mutex * toDoMutex, std::stack<calc *> * toDo);
+	calc * enemyPlay(POS position);
+	void resetStep(int step);
 
 
 };
@@ -42,12 +48,15 @@ public:
 	calc * turn = NULL;
 	std::stack<calc *> * toDo;
 	std::mutex * toDoMutex;
+	std::thread ** thread;
 	AI();
 	~AI();
 	void start(void);
 	calc * availablePlay(POS position);
 	void playTurn(POS position);
 	POS nextPosition(void);
+	void calculate(void);
+	void threadWork(std::stack<calc *> * toDo, std::mutex * toDoMutex);
 
 };
 

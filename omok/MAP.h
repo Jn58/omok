@@ -5,7 +5,7 @@ private:
 	
 public:
 	int ** map;
-	int size;
+	int size=0;
 	void makeMap(int n);
 	void clearMap(void);
 	int getSize();

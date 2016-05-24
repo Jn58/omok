@@ -3,7 +3,7 @@
 
 void MAP::makeMap(int size=15)
 {
-	this->~MAP();
+
 	MAP::size = size;
 	map = new int*[size];
 	for (int i = 0; i < size; i++)
@@ -44,7 +44,11 @@ void MAP::print()
 }
 MAP::MAP()
 {
-	makeMap();
+	if (size!=0)
+	{
+		this->~MAP();
+	}
+	makeMap(15);
 	clearMap();
 }
 /*MAP::MAP( MAP &parent)

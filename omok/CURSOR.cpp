@@ -39,8 +39,8 @@ void CURSOR::setColor(COLOR text, COLOR background)
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), (bgcolor << 4) | color);
 }
 
-template <T> void CURSOR::gotoxy(T x, T y)
+void CURSOR::gotoxy(short x, short y)
 {
-	COORD pos = { short(x),short(y) };
+	COORD pos = { x,y };
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 }

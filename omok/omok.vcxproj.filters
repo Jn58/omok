@@ -24,12 +24,30 @@
     <ClCompile Include="gotoxy.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MAP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CURSOR.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="timer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="gotoxy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CURSOR.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MAP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

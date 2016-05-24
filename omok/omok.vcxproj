@@ -145,12 +145,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AI.cpp" />
+    <ClCompile Include="CURSOR.cpp" />
     <ClCompile Include="gotoxy.cpp" />
+    <ClCompile Include="MAP.cpp" />
     <ClCompile Include="omok.cpp" />
     <ClCompile Include="timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AI.h" />
+    <ClInclude Include="CURSOR.h" />
     <ClInclude Include="gotoxy.h" />
+    <ClInclude Include="MAP.h" />
     <ClInclude Include="timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

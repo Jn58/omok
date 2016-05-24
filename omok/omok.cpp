@@ -16,63 +16,19 @@
 #include "gotoxy.h"
 #include "timer.h"
 #include "MAP.h"
+#include "AI.h"
+#include "CURSOR.h"
 
 
-#define MAX_STEP 2
-#define THREAD int(thread::hardware_concurrency())
+
 #define MAP_SIZE 15
 
 using namespace std;
 
-typedef enum { NOCURSOR, SOLIDCURSOR, NORMALCURSOR } CURSOR_TYPE;
-
-class calc;
-mutex mut;
-
-
-
-struct POS
-{
-	int x, y;
-};
-
-
-void setcursortype(CURSOR_TYPE c);
-
 void playpos(int x, int y);
-
-void setcolor(int color, int bgcolor);
-
 void initMap(int size);
 void print(POS p, int t);
 POS player(void);
-bool PComp(const calc * const & a, const calc * const & b);
-
-
-bool rule(MAP * m, POS * p, int t);
-
-
-stack<calc*> toDo;
-
-void calc::makeChild(mutex * m)
-{
-	if (step > MAX_STEP) return;
-	possiblePosition();
-	while (!posQ.empty())
-	{
-		POS childPos = posQ.front();
-		posQ.pop();
-		if (rule(map, &childPos, turn*-1)) continue;
-		calc* child = new calc(this, map, childPos, turn*-1, step + 1);
-		m->lock();
-		toDo.push(child);
-		m->unlock();
-		this->child.push_back(child);
-	}
-
-}
-
-
 int check(const MAP * const map)
 {
 	int j, k;
@@ -160,10 +116,8 @@ int check(const MAP * const map)
 
 	return 3;
 }
-
-void threadWork(stack<calc*>* toDo,mutex * m);
-
 void delTxt(void);
+bool rule(MAP * m, POS * p, int t);
 
 
 MAP map;
@@ -176,75 +130,21 @@ int main(void)
 	POS p;
 	ostringstream setting;
 	TIMER *timer;
-
-	thread ** devideWork = new thread*[THREAD];
+	CURSOR::setCursor(CURSOR_TYPE::NOCURSOR);
 	map.makeMap(MAP_SIZE);
 	map.clearMap();
-	setting << "mode con:cols=" << map.size * 4 + 4 << " lines=" << map.size * 2 + 6;
-	
+	setting << "mode con:cols=" << map.size * 4 + 4 << " lines=" << map.size * 2 + 6;	
 	system(setting.str().c_str());
-	setcursortype(NOCURSOR);
 	initMap(map.size);
-	timer = new TIMER(map.size);
+	AI ai;
+	ai.start();
+	p = ai.nextPosition();
+	print(p, 1);
+	map.map[p.x][p.y] = 1;
 	while (1)
 	{
-		int ch;
-		calc *ai;
-		ai = new calc(&map, -1, 0);
-
-		delTxt();
-		cout << "AI is thinking..." << endl;
-		timer->start();
-		ai->work(&mut);
-		
-		for (int i = 0; i < THREAD; i++)
-		{
-			devideWork[i] = new thread(&threadWork, &toDo, &mut);
-
-		}
-		for (int i = 0; i < THREAD; i++)
-		{
-			devideWork[i]->join();
-		}
-		for (int i = 0; i < THREAD; i++)
-		{
-			delete devideWork[i];
-		}
-		
-		timer->end();
-		p = ai->nextPOS();
-		print(p, 1);
-
-		map.map[p.x][p.y] = 1;
-		delete ai;
-		//timer->print_time();
-		//if (timer->time() >= 1) exit(0);
-		
-		ch = check(&map);
-		if (ch)
-		{
-			delTxt();
-			if (ch == 1)
-			{
-				cout << "AI win" << endl;
-				break;
-			}
-			else if (ch == -1)
-			{
-				cout << "Human win" << endl;
-				break;
-			}
-			else
-			{
-				cout << "Draw!" << endl;
-				break;
-			}
-		}
-
-		
-			p = player();
-			
-
+		int ch;		
+		p = player();
 		map.map[p.x][p.y] = -1;
 		print(p, -1);
 		ch = check(&map);
@@ -268,6 +168,37 @@ int main(void)
 				break;
 			}
 		}
+		delTxt();
+		cout << "AI is thinking..." << endl;
+		//timer->start();
+		ai.playTurn(p);
+		p = ai.nextPosition();
+		//timer->end();
+		print(p, 1);
+		map.map[p.x][p.y] = 1;
+		//timer->print_time();
+		//if (timer->time() >= 1) exit(0);
+
+		ch = check(&map);
+		if (ch)
+		{
+			delTxt();
+			if (ch == 1)
+			{
+				cout << "AI win" << endl;
+				break;
+			}
+			else if (ch == -1)
+			{
+				cout << "Human win" << endl;
+				break;
+			}
+			else
+			{
+				cout << "Draw!" << endl;
+				break;
+			}
+		}
 	}
 	system("pause");
 	return 0;
@@ -276,26 +207,7 @@ int main(void)
 
 
 
-void setcursortype(CURSOR_TYPE c)
-{
-	CONSOLE_CURSOR_INFO CurInfo;
-	switch (c)
-	{
-	case NOCURSOR:
-		CurInfo.dwSize = 1;
-		CurInfo.bVisible = FALSE;
-		break;
-	case SOLIDCURSOR:
-		CurInfo.dwSize = 100;
-		CurInfo.bVisible = TRUE;
-		break;
-	case NORMALCURSOR:
-		CurInfo.dwSize = 20;
-		CurInfo.bVisible = TRUE;
-		break;
-	}
-	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &CurInfo);
-}
+
 void playpos(int x, int y)
 {
 	gotoxy(4 * x + 3, y * 2 + 1);
@@ -303,7 +215,7 @@ void playpos(int x, int y)
 
 void initMap(int size)
 {
-	setcolor(15, 0);
+	CURSOR::setColor(WHITE_L, BLACK);
 	printf("   A ");
 	for (int i = 0; i < size - 1; i++)
 	{
@@ -311,43 +223,43 @@ void initMap(int size)
 	}
 	printf("\n");
 	printf(" 1 ");
-	setcolor(0, 6);
+	CURSOR::setColor(BLACK, YELLOW);
 	printf("忙式");
 	for (int i = 0; i < size - 2; i++) printf("成式");
 	printf("忖");
-	setcolor(15, 0);
+	CURSOR::setColor(WHITE_L, BLACK);
 	cout << 1 << endl;
 	printf("   ");
-	setcolor(0, 6);
+	CURSOR::setColor(BLACK, YELLOW);
 	printf("弛");
 	for (int i = 0; i < size - 1; i++) printf("﹛弛");
 	printf("\n");
 	for (int j = 0; j < size - 2; j++)
 	{
-		setcolor(15, 0);
+		CURSOR::setColor(WHITE_L, BLACK);
 		printf("%2d ", j + 2);
-		setcolor(0, 6);
+		CURSOR::setColor(BLACK, YELLOW);
 		printf("戍式");
 		for (int i = 0; i < size - 2; i++) printf("托式");
 
 		printf("扣");
-		setcolor(15, 0);
+		CURSOR::setColor(WHITE_L, BLACK);
 		cout << j + 2<<endl;
 		printf("   ");
-		setcolor(0, 6);
+		CURSOR::setColor(BLACK, YELLOW);
 		printf("弛");
 		for (int i = 0; i < size - 1; i++) printf("﹛弛");
 		printf("\n");
 	}
-	setcolor(15, 0);
+	CURSOR::setColor(WHITE_L, BLACK);
 	printf("%2d ", size);
-	setcolor(0, 6);
+	CURSOR::setColor(BLACK, YELLOW);
 	printf("戌式");
 	for (int i = 0; i < size - 2; i++) printf("扛式");
 	printf("戎");
-	setcolor(15, 0);
+	CURSOR::setColor(WHITE_L, BLACK);
 	cout << size << endl;
-	setcolor(15, 0);
+	CURSOR::setColor(WHITE_L, BLACK);
 	printf("   A ");
 	for (int i = 0; i < size - 1; i++)
 	{
@@ -361,18 +273,17 @@ void print(POS p, int t)
 	playpos(p.x, p.y);
 	if (t == 1)
 	{
-		setcolor(0, 6);
+		CURSOR::setColor(BLACK,YELLOW);
 		printf("≒");
 	}
 	else
 	{
-		setcolor(15, 6);
+		CURSOR::setColor(WHITE_L, YELLOW);
 		printf("≒");
 	}
 
-	setcolor(15, 0);
+	CURSOR::setColor(WHITE_L, BLACK);
 }
-
 POS player(void)
 {
 	delTxt();
@@ -392,13 +303,9 @@ POS player(void)
 		}
 		return p;
 	}
-
 }
 
-bool PComp(const calc * const & a, const calc * const & b)
-{
-	return a->point > b->point;
-}
+
 bool rule(MAP * m, POS * p, int t)
 {
 	int count = 0;
@@ -437,19 +344,6 @@ bool rule(MAP * m, POS * p, int t)
 		return false;
 	}
 
-}
-void threadWork(stack<calc*>* toDo, mutex * m)
-{
-	while (1)
-	{
-		m->lock();
-		if (toDo->empty())break;
-		calc *temp = toDo->top();
-		toDo->pop();
-		m->unlock();
-		if (temp) temp->work(m);
-	}
-	m->unlock();
 }
 
 void delTxt(void)

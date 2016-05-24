@@ -1,40 +1,179 @@
 #include "AI.h"
 
+
 #define MAX_STEP 2
+#define THREAD int((std::thread::hardware_concurrency()*3)/2)
+#define SINGLE
 
 
 AI::AI()
 {
+	toDoMutex = new std::mutex();
+	toDo = new std::stack<calc *>;
+	std::thread ** thread = new std::thread*[THREAD];
+
 }
 
 AI::~AI()
 {
+	delete thread;
+	delete turn;
+	delete toDoMutex;
+	delete toDo;
 }
 
 void AI::start(void)
 {
-	AI::turn = new calc();
+	turn = new calc();
+	this->calculate();
 }
+
+calc * AI::availablePlay(POS position)
+{
+	calc * nextTurn = NULL;
+	if (turn != NULL)
+		while (!turn->child.empty())
+		{
+			calc * pop = turn->child.front();
+			turn->child.pop_front();
+			if (pop->position.x == position.x && pop->position.y == position.y)
+			{
+				nextTurn = pop;
+			}
+			else
+			{
+				delete pop;
+			}
+		}
+	return nextTurn;
+}
+
+void AI::playTurn(POS position)
+{
+	calc * nextTurn = availablePlay(position);
+
+	if (nextTurn!=NULL)
+	{
+		delete turn;
+		turn = nextTurn;
+	}
+	else
+	{
+		if (turn == NULL)
+		{
+			turn = new calc();
+		}		
+		turn = turn->enemyPlay(position);
+		
+		
+	}
+	turn->resetStep(0);
+	this->calculate();
+}
+
+POS AI::nextPosition(void)
+{
+	calc * nextTurn;
+	int temp;
+	turn->child.sort(calc::compare);
+	temp = 0;
+	nextTurn = turn->child.front();
+	turn->child.pop_front();
+	delete turn;
+	turn = nextTurn;
+	return nextTurn->position;
+}
+#ifndef SINGLE
+void AI::calculate()
+{
+	AI::turn->makeChild(toDoMutex, toDo);
+	for (int i = 0; i < THREAD; i++)
+	{
+		thread[i] = new std::thread(&threadWork, toDo, toDoMutex);
+
+	}
+	for (int i = 0; i < THREAD; i++)
+	{
+		thread[i]->join();
+	}
+	for (int i = 0; i < THREAD; i++)
+	{
+		delete thread[i];
+	}
+}
+#else
+void AI::calculate(void)
+{
+	AI::turn->makeChild(toDoMutex, toDo);
+	while (1)
+	{
+		toDoMutex->lock();
+		if (toDo->empty())break;
+		calc *temp = toDo->top();
+		toDo->pop();
+		toDoMutex->unlock();
+		temp->work(toDoMutex, toDo);
+	}
+	toDoMutex->unlock();
+}
+#endif // !SINGLE
+
+
+
+
+void AI::threadWork(std::stack<calc *> * toDo, std::mutex * toDoMutex)
+{
+	while (1)
+	{
+		toDoMutex->lock();
+		if (toDo->empty())break;
+		calc *temp = toDo->top();
+		toDo->pop();
+		toDoMutex->unlock();
+		temp->work(toDoMutex, toDo);
+	}
+	toDoMutex->unlock();
+}
+
 
 calc::calc()
 {
-	calc::parent = NULL;
-	calc::map = new MAP();
-	calc::turn = -1;
-	calc::point = 0;
-	calc::step = 0;
-	std::queue<POS> posQ;
-	std::mutex mutex;
+	this->parent = NULL;
+	this->map = new MAP();
+	this->turn = -1;
+	this->point = 0;
+	this->step = 0;
+}
+calc::calc(MAP *  map, int  turn, int step, POS position)
+{
+	this->map = new MAP(map);
+	this->turn = turn;
+	this->step = step;
+	this->parent = NULL;
+	this->position.x = position.x;
+	this->position.y = position.y;
+	this->map->map[position.x][position.y] = turn;
+}
+calc::calc(MAP *  map,  int  turn,  int step,  POS position ,calc  *parent )
+{
+	this->map = new MAP(map);
+	this->turn = turn;
+	this->step = step;
+	this->parent = parent;
+	this->position.x = position.x;
+	this->position.y = position.y;
+	this->map->map[position.x][position.y] = turn;
 }
 
-calc::calc(MAP * const map, const int  turn, const int step, calc  *parent = NULL, POS position = { 0,0 })
+calc::calc(MAP * map, POS position)
 {
-	calc::map = new MAP(map);
-	calc::turn = turn;
-	calc::step = step;
-	calc::parent = parent;
-	calc::position.x = position.x;
-	calc::position.y = position.y;
+	this->map = new MAP(map);
+	this->turn = turn;
+	this->step = step;
+	this->parent = NULL;
+	this->position.x = position.x;
+	this->position.y = position.y;
+	this->map->map[position.x][position.y] = -1;
 }
 
 calc::~calc()
@@ -48,6 +187,7 @@ calc::~calc()
 		}
 
 	}
+	delete map;
 }
 
 bool calc::operator<(const calc & other)
@@ -103,9 +243,9 @@ bool calc::rule(MAP * m, POS * p, int t)
 void calc::updatePoint(double add)
 {
 	{
-		calc::mutex.lock();
+		this->mutex.lock();
 		point += add;
-		calc::mutex.unlock();
+		this->mutex.unlock();
 		if (parent) parent->updatePoint(add);
 	}
 }
@@ -115,38 +255,38 @@ void calc::evaluatePoint(void)
 	int pi[5] = { 0, };
 	double sum = 0;
 	int count = 0;
-	for (int i = 0, j = 0; i < 5; i++)
+	for (int i = 0,j; i < 5; i++)
 	{
-		if (calc::position.x - 4 + i < 0) continue;
-		if (calc::position.x + i >= map->size) break;
-		for (j = 0, count = 0; j < 5; j++)
+		if (this->position.x - 4 + i < 0) continue;
+		if (this->position.x + i >= map->size) break;
+		for ( j = 0, count = 0; j < 5; j++)
 		{
-			if (map->map[calc::position.x - 4 + i + j][calc::position.y] == turn*-1) break;
-			if (map->map[calc::position.x - 4 + i + j][calc::position.y] == turn) count++;
+			if (map->map[this->position.x - 4 + i + j][this->position.y] == turn*-1) break;
+			if (map->map[this->position.x - 4 + i + j][this->position.y] == turn) count++;
 		}
 		if (j == 5)
 			pi[count - 1]++;
 	}
 	for (int i = 0, j = 0; i < 5; i++)
 	{
-		if (calc::position.y - 4 + i < 0) continue;
-		if (calc::position.y + i >= map->size) break;
+		if (this->position.y - 4 + i < 0) continue;
+		if (this->position.y + i >= map->size) break;
 		for (j = 0, count = 0; j < 5; j++)
 		{
-			if (map->map[calc::position.x][calc::position.y - 4 + i + j] == turn*-1) break;
-			if (map->map[calc::position.x][calc::position.y - 4 + i + j] == turn) count++;
+			if (map->map[this->position.x][this->position.y - 4 + i + j] == turn*-1) break;
+			if (map->map[this->position.x][this->position.y - 4 + i + j] == turn) count++;
 		}
 		if (j == 5)
 			pi[count - 1]++;
 	}
 	for (int i = 0, j = 0; i < 5; i++)
 	{
-		if (calc::position.x - 4 + i < 0 || calc::position.y - 4 + i < 0) continue;
-		if (calc::position.x + i >= map->size || calc::position.y + i >= map->size) break;
+		if (this->position.x - 4 + i < 0 || this->position.y - 4 + i < 0) continue;
+		if (this->position.x + i >= map->size || this->position.y + i >= map->size) break;
 		for (j = 0, count = 0; j < 5; j++)
 		{
-			if (map->map[calc::position.x - 4 + i + j][calc::position.y - 4 + i + j] == turn*-1) break;
-			if (map->map[calc::position.x - 4 + i + j][calc::position.y - 4 + i + j] == turn) count++;
+			if (map->map[this->position.x - 4 + i + j][this->position.y - 4 + i + j] == turn*-1) break;
+			if (map->map[this->position.x - 4 + i + j][calc::position.y - 4 + i + j] == turn) count++;
 		}
 		if (j == 5)
 			pi[count - 1]++;
@@ -165,7 +305,7 @@ void calc::evaluatePoint(void)
 	}
 	for (int i = 0; i < 5; i++)
 	{
-		sum += pow(1000, i)*pi[i];
+		sum += double(pow(1000, i)*pi[i]);
 	}
 	updatePoint(sum*turn / (pow(step, 4)));
 }
@@ -251,7 +391,7 @@ void calc::possiblePosition(std::queue<POS> * posQ)
 
 void calc::makeChild(std::mutex * toDoMutex, std::stack<calc *> * toDo)
 {
-	if (step > MAX_STEP) return;
+	if (step == MAX_STEP) return;
 	std::queue<POS> *posQ = new std::queue<POS>;
 	possiblePosition(posQ);
 	while (!posQ->empty())
@@ -259,19 +399,52 @@ void calc::makeChild(std::mutex * toDoMutex, std::stack<calc *> * toDo)
 		POS childPos = posQ->front();
 		posQ->pop();
 		if (rule(map, &childPos, turn*-1)) continue;
-		calc* child = new calc(map,  turn*-1, step + 1, this, childPos);
+		calc* child = new calc(map, turn*-1, step + 1, childPos,this );
 		toDoMutex->lock();
 		toDo->push(child);
 		toDoMutex->unlock();
 		this->child.push_back(child);
 	}
+	delete posQ;
 }
 
 void calc::work(std::mutex * toDoMutex, std::stack<calc *> * toDo)
 {
-	
-	calc::evaluatePoint();
-	calc::makeChild(toDoMutex, toDo);
-	delete map;
+
+	if (child.empty())
+	{
+		calc::evaluatePoint();
+		calc::makeChild(toDoMutex, toDo);
+	}
+	else
+	{
+		toDoMutex->lock();
+		for (std::list<calc *>::iterator i = child.begin(); i != child.end(); i++)
+		{
+			toDo->push((*i));
+		}
+		toDoMutex->unlock();
+	}
+
 }
 
+
+
+calc * calc::enemyPlay(POS position)
+{
+	calc * nextTurn = new calc(map, position);
+	delete this;
+	return nextTurn;
+}
+
+void calc::resetStep(int step)
+{
+	calc::step = step++;
+	if (!child.empty())
+	{
+		for (std::list<calc *>::iterator i = child.begin(); i != child.end(); i++)
+		{
+			(*i)->resetStep(step);
+		}
+	}
+}

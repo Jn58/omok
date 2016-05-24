@@ -18,7 +18,7 @@ public:
 	MAP * map;
 	int turn;
 	POS position;
-	double point;
+	double point=0;
 	int step;
 	std::mutex mutex;
 
@@ -38,6 +38,7 @@ public:
 	void work(std::mutex * toDoMutex, std::stack<calc *> * toDo);
 	calc * enemyPlay(POS position);
 	void resetStep(int step);
+	void place(void);
 
 
 };
@@ -56,7 +57,7 @@ public:
 	void playTurn(POS position);
 	POS nextPosition(void);
 	void calculate(void);
-	void threadWork(std::stack<calc *> * toDo, std::mutex * toDoMutex);
+	static void threadWork(std::stack<calc *> * toDo, std::mutex * toDoMutex);
 
 };
 

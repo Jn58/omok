@@ -133,12 +133,12 @@ int main(void)
 	CURSOR::setCursor(CURSOR_TYPE::NOCURSOR);
 	map.makeMap(MAP_SIZE);
 	map.clearMap();
-	setting << "mode con:cols=" << map.size * 4 + 4 << " lines=" << map.size * 2 + 6;	
+	setting << "mode con:cols=" << map.size * 4 + 6 << " lines=" << map.size * 2 + 10;	
 	system(setting.str().c_str());
 	initMap(map.size);
-	AI ai;
-	ai.start();
-	p = ai.nextPosition();
+	AI * ai=new AI();
+	ai->start();
+	p = ai->nextPosition();
 	print(p, 1);
 	map.map[p.x][p.y] = 1;
 	while (1)
@@ -171,8 +171,8 @@ int main(void)
 		delTxt();
 		cout << "AI is thinking..." << endl;
 		//timer->start();
-		ai.playTurn(p);
-		p = ai.nextPosition();
+		ai->playTurn(p);
+		p = ai->nextPosition();
 		//timer->end();
 		print(p, 1);
 		map.map[p.x][p.y] = 1;
@@ -200,6 +200,7 @@ int main(void)
 			}
 		}
 	}
+	delete ai;
 	system("pause");
 	return 0;
 }
@@ -210,7 +211,7 @@ int main(void)
 
 void playpos(int x, int y)
 {
-	gotoxy(4 * x + 3, y * 2 + 1);
+	gotoxy(4 * x + 3, y * 2 + 2);
 }
 
 void initMap(int size)
@@ -348,13 +349,13 @@ bool rule(MAP * m, POS * p, int t)
 
 void delTxt(void)
 {
-	gotoxy(0, map.size * 2+1);
+	gotoxy(0, map.size * 2+3);
 	for (int i = 0; i < map.size * 4 + 3; i++) cout << ' ';
 	cout << endl;
 	for (int i = 0; i <map.size * 4 + 3; i++) cout << ' ';
 	cout << endl;
 	for (int i = 0; i <map.size * 4 + 3; i++) cout << ' ';
-	gotoxy(0, map.size * 2+1);
+	gotoxy(0, map.size * 2+3);
 	return;
 
 }

@@ -1,10 +1,10 @@
 #include "AI.h"
 
 
-#define MAX_STEP 2
+//#define MAX_STEP 2
 #define THREAD int((std::thread::hardware_concurrency()*3)/2)
 //#define SINGLE
-
+//#define FURTHER
 
 AI::AI()
 {
@@ -23,7 +23,7 @@ AI::~AI()
 
 void AI::start(void)
 {
-	turn = new calc();
+	turn = new calc(1);
 	this->calculate();
 }
 
@@ -67,8 +67,15 @@ void AI::playTurn(POS position)
 
 
 	}
-	turn->resetStep(0);
+	turn->resetStep(2);
 	this->calculate();
+#ifdef FURTHER
+	reduceChild(2);
+	turn->resetStep(3);
+#endif // FURTHER
+	
+	calculate();
+
 }
 
 POS AI::nextPosition(void)
@@ -136,6 +143,18 @@ void AI::threadWork(std::stack<calc *> * toDo, std::mutex * toDoMutex)
 	toDoMutex->unlock();
 }
 
+void AI::reduceChild(int num)
+{
+	turn->child.sort(calc::compare);
+	calc * rmTurn;
+	while (this->turn->child.size() > num)
+	{
+		rmTurn = this->turn->child.back();
+		this->turn->child.pop_back();
+		delete rmTurn;
+	}
+}
+
 
 calc::calc()
 {
@@ -143,6 +162,13 @@ calc::calc()
 	this->map = new MAP();
 	this->turn = -1;
 	this->step = 0;
+}
+calc::calc(int step)
+{
+	this->parent = NULL;
+	this->map = new MAP();
+	this->turn = -1;
+	this->step = step;
 }
 calc::calc(MAP *  map, int  turn, int step, POS position)
 {
@@ -168,8 +194,8 @@ calc::calc(MAP *  map, int  turn, int step, POS position, calc  *parent)
 calc::calc(MAP * map, POS position)
 {
 	this->map = new MAP(map);
-	this->turn = turn;
-	this->step = step;
+	this->turn = -1;
+	this->step = 0;
 	this->parent = NULL;
 	this->position.x = position.x;
 	this->position.y = position.y;
@@ -305,7 +331,7 @@ void calc::evaluatePoint(void)
 	{
 		sum += double(pow(1000, i)*pi[i]);
 	}
-	updatePoint(sum*turn / (pow(step, 4)));
+	updatePoint(sum*turn * (pow(4, step)));
 }
 
 void calc::possiblePosition(std::queue<POS> * posQ)
@@ -389,7 +415,7 @@ void calc::possiblePosition(std::queue<POS> * posQ)
 
 void calc::makeChild(std::mutex * toDoMutex, std::stack<calc *> * toDo)
 {
-	if (step == MAX_STEP) return;
+	if (step == 0) return;
 	std::queue<POS> *posQ = new std::queue<POS>;
 	possiblePosition(posQ);
 	while (!posQ->empty())
@@ -406,9 +432,10 @@ void calc::makeChild(std::mutex * toDoMutex, std::stack<calc *> * toDo)
 	delete posQ;
 }
 
+
 void calc::work(std::mutex * toDoMutex, std::stack<calc *> * toDo)
 {
-
+	this->step = this->parent->step - 1;
 	if (child.empty())
 	{
 		calc::evaluatePoint();
@@ -442,12 +469,5 @@ calc * calc::enemyPlay(POS position)
 
 void calc::resetStep(int step)
 {
-	calc::step = step++;
-	if (!child.empty())
-	{
-		for (std::list<calc *>::iterator i = child.begin(); i != child.end(); i++)
-		{
-			(*i)->resetStep(step);
-		}
-	}
+	this->step = step;
 }

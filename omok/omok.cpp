@@ -23,6 +23,10 @@
 
 #define MAP_SIZE 15
 
+//#define TEST
+#define LEARNING
+
+#ifdef TEST
 using namespace std;
 
 void playpos(int x, int y);
@@ -133,17 +137,17 @@ int main(void)
 	CURSOR::setCursor(CURSOR_TYPE::NOCURSOR);
 	map.makeMap(MAP_SIZE);
 	map.clearMap();
-	setting << "mode con:cols=" << map.size * 4 + 6 << " lines=" << map.size * 2 + 10;	
+	setting << "mode con:cols=" << map.size * 4 + 6 << " lines=" << map.size * 2 + 10;
 	system(setting.str().c_str());
 	initMap(map.size);
-	AI * ai=new AI();
+	AI * ai = new AI();
 	ai->start();
 	p = ai->nextPosition();
 	print(p, 1);
 	map.map[p.x][p.y] = 1;
 	while (1)
 	{
-		int ch;		
+		int ch;
 		p = player();
 		map.map[p.x][p.y] = -1;
 		print(p, -1);
@@ -211,7 +215,7 @@ int main(void)
 
 void playpos(int x, int y)
 {
-	gotoxy(4 * x + 3, y * 2 + 2);
+	gotoxy(4 * x + 3, y * 2 + 1);
 }
 
 void initMap(int size)
@@ -245,7 +249,7 @@ void initMap(int size)
 
 		printf("¦©");
 		CURSOR::setColor(WHITE_L, BLACK);
-		cout << j + 2<<endl;
+		cout << j + 2 << endl;
 		printf("   ");
 		CURSOR::setColor(BLACK, YELLOW);
 		printf("¦¢");
@@ -274,7 +278,7 @@ void print(POS p, int t)
 	playpos(p.x, p.y);
 	if (t == 1)
 	{
-		CURSOR::setColor(BLACK,YELLOW);
+		CURSOR::setColor(BLACK, YELLOW);
 		printf("¡Ü");
 	}
 	else
@@ -296,7 +300,7 @@ POS player(void)
 		cin >> input;
 		p.x = (input[0] & ~32) - 'A';
 		p.y = atoi(input.c_str() + 1) - 1;
-		if (rule(&map, &p, -1) || p.x < 0 || p.x >= map.size || p.y < 0 || p.y >= map.size|| map.map[p.x][p.y] != 0)
+		if (rule(&map, &p, -1) || p.x < 0 || p.x >= map.size || p.y < 0 || p.y >= map.size || map.map[p.x][p.y] != 0)
 		{
 			delTxt();
 			cout << "You can not put there.\nRetry." << endl;
@@ -349,14 +353,33 @@ bool rule(MAP * m, POS * p, int t)
 
 void delTxt(void)
 {
-	gotoxy(0, map.size * 2+3);
+	gotoxy(0, map.size * 2 + 3);
 	for (int i = 0; i < map.size * 4 + 3; i++) cout << ' ';
 	cout << endl;
 	for (int i = 0; i <map.size * 4 + 3; i++) cout << ' ';
 	cout << endl;
 	for (int i = 0; i <map.size * 4 + 3; i++) cout << ' ';
-	gotoxy(0, map.size * 2+3);
+	gotoxy(0, map.size * 2 + 3);
 	return;
 
 }
+#else
+#ifdef LEARNING
+int main()
+{
+
+}
+#else
+int main()
+{
+	POS p;
+	std::string input;
+	std::cout << system("game human human");
+	//p.x = (input[0] & ~32) - 'A';
+	//p.y = atoi(input.c_str() + 1) - 1;
+}
+#endif // LEARNING
+
+#endif // TEST 
+
 

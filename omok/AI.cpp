@@ -5,12 +5,22 @@
 #define THREAD int((std::thread::hardware_concurrency()*3)/2)
 //#define SINGLE
 //#define FURTHER
-
+PARAMETER p;
 AI::AI()
 {
 	toDoMutex = new std::mutex();
 	toDo = new std::stack<calc *>;
 	thread = new std::thread*[THREAD];
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			for (int k = 0; k < 2; k++)
+			{
+				p.value[i][j][k] = 1;
+			}
+		}
+	}
 }
 
 AI::~AI()
@@ -329,11 +339,23 @@ void calc::evaluatePoint(void)
 	}
 	for (int i = 0; i < 5; i++)
 	{
-		sum += double(pow(1000, i)*pi[i]);
+		sum += evaluationFunction(pi[i],i,step,p);
 	}
-	updatePoint(sum*turn * (pow(4, step)));
+	updatePoint(sum*turn );
 }
-
+double calc::evaluationFunction(int count, int num, int step,PARAMETER p)
+{
+	double a, b;
+	a = p.value[num][0][0] * pow(count, p.value[num][0][1]);
+	a+=p.value[num][1][0]* pow( p.value[num][1][1], count);
+	a += p.value[num][2][0] * (logb(count + 2) / logb(p.value[num][2][1]));
+	a = pow(a, 3);
+	b = p.value[5][0][0] * pow(count, p.value[5][0][1]);
+	b += p.value[5][1][0] * pow(p.value[5][1][1], count);
+	b += p.value[5][2][0] * (logb(count + 2) / logb(p.value[5][2][1]));
+	b = pow(b, 3);
+	return a*b;
+}
 void calc::possiblePosition(std::queue<POS> * posQ)
 {
 	std::queue<POS> temp_Q;
@@ -470,4 +492,18 @@ calc * calc::enemyPlay(POS position)
 void calc::resetStep(int step)
 {
 	this->step = step;
+}
+
+void calc::setParameter(PARAMETER p)
+{
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			for (int k = 0; k < 2; k++)
+			{
+				parameter.value[i][j][k] = p.value[i][j][k];
+			}
+		}
+	}
 }

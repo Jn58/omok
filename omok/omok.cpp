@@ -13,18 +13,20 @@
 #include <stack>
 #include <sstream>
 #include <ctime>
+#include <fstream>
 #include "gotoxy.h"
 #include "timer.h"
 #include "MAP.h"
 #include "AI.h"
 #include "CURSOR.h"
+#include "ENTITY.h"
 
 
 
 #define MAP_SIZE 15
 
-//#define TEST
-#define LEARNING
+#define TEST
+//#define LEARNING
 
 #ifdef TEST
 using namespace std;
@@ -367,7 +369,20 @@ void delTxt(void)
 #ifdef LEARNING
 int main()
 {
-
+	
+	std::ofstream out("a.txt");
+	out << 1;
+	for (int i = 2; i < 46;i++)
+	{
+		out << "," << i;
+	}
+	out.close();
+	ENTITY e;
+	std::ifstream in("a.txt");
+	char b[200];
+	in.getline(b,200);
+	e.setParameter(b);
+	return 0;
 }
 #else
 void printNext(POS p);

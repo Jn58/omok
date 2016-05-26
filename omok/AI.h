@@ -6,13 +6,20 @@
 #include <mutex>
 #include <thread>
 #include "MAP.h"
+#include <string>
+#include "PARAMETER.h"
+#include <math.h>
 struct POS
 {
 	int x,y;
 };
+
+
+
 class calc
 {
 public:
+	PARAMETER parameter;
 	calc* parent;
 	std::list<calc*> child;
 	MAP * map;
@@ -34,14 +41,14 @@ public:
 	bool calc::rule(MAP * m, POS * p, int t);
 	void calc::updatePoint(double add);
 	void calc::evaluatePoint(void);
-	void calc::evaluationFunction(int count,int num, int step);
+	double calc::evaluationFunction(int count,int num, int step, PARAMETER p);
 	void calc::possiblePosition(std::queue<POS> * posQ);
 	void calc::makeChild(std::mutex * toDoMutex, std::stack<calc *> * toDo);
 	void calc::work(std::mutex * toDoMutex, std::stack<calc *> * toDo);
 	calc * calc::enemyPlay(POS position);
 	void calc::resetStep(int step);
 	void calc::place(void);
-	
+	void calc::setParameter(PARAMETER p);
 
 
 };
@@ -64,5 +71,4 @@ public:
 	void AI::reduceChild(int num);
 
 };
-
 

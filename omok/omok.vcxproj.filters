@@ -33,6 +33,12 @@
     <ClCompile Include="CURSOR.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ENTITY.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PARAMETER.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="timer.h">
@@ -48,6 +54,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MAP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ENTITY.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PARAMETER.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

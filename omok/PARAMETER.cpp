@@ -1,0 +1,13 @@
+#include "PARAMETER.h"
+
+
+
+PARAMETER::PARAMETER()
+{
+	
+}
+
+
+PARAMETER::~PARAMETER()
+{
+}

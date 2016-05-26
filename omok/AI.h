@@ -34,6 +34,7 @@ public:
 	bool calc::rule(MAP * m, POS * p, int t);
 	void calc::updatePoint(double add);
 	void calc::evaluatePoint(void);
+	void calc::evaluationFunction(int count,int num, int step);
 	void calc::possiblePosition(std::queue<POS> * posQ);
 	void calc::makeChild(std::mutex * toDoMutex, std::stack<calc *> * toDo);
 	void calc::work(std::mutex * toDoMutex, std::stack<calc *> * toDo);

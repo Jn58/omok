@@ -384,7 +384,7 @@ void calc::evaluatePoint(void)
 	{
 		sum += double(pow(1000, i)*pi[i]);
 	}
-	updatePoint(sum*turn );
+	updatePoint(sum*turn / (pow(step, 4)));
 }
 void calc::evaluatePoint(PARAMETER p)
 {
@@ -454,7 +454,7 @@ double calc::evaluationFunction(int count, int num, int step,PARAMETER p)
 	a = pow(a, 3);
 	b = p.value[5][0][0] * pow(count, p.value[5][0][1]);
 	b += p.value[5][1][0] * pow(p.value[5][1][1], count);
-	b += p.value[5][2][0] * (logb(count + 2) * logb(p.value[5][2][1]));
+	b += p.value[5][2][0] * pow(logb(count + 2), p.value[5][2][1]);
 	b = pow(b, 3);
 	return a*b;
 }

@@ -3,7 +3,7 @@
 #include <random>
 #include <chrono>
 #include <fstream>
-#include "PARAMETER.h"
+#include "./PARAMETER.h"
 class ENTITY
 {
 public:

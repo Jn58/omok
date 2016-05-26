@@ -27,6 +27,8 @@
 
 
 #define MAP_SIZE 15
+#define SAVED 2
+#define MULTIPLE 1
 
 //#define TEST
 #define LEARNING
@@ -392,25 +394,25 @@ int main()
 		std::cin >> commonString;
 		in.open(commonString);
 	}
-	ENTITY entity[50];
-	char b[200];
-	for (int i = 0; i < 5; i++)
+	ENTITY entity[SAVED*MULTIPLE];
+	char b[400];
+	for (int i = 0; i < SAVED; i++)
 	{
 		
-		in.getline(b, 200);
-		entity[i].setParameter(b);
-		for (int j = 1; j < 5; j++)
+		in.getline(b, 400);
+		entity[i*MULTIPLE].setParameter(b);
+		for (int j = 1; j < MULTIPLE; j++)
 		{
-			entity[i * 5 + j].makeParameter(entity[i].parameter);
+			entity[i * MULTIPLE + j].makeParameter(entity[i].parameter);
 		}
 	}
 	in.close();
 	game g;
 	while (1)
 	{
-		for (int i = 0; i < 24; i++)
+		for (int i = 0; i < SAVED*MULTIPLE-1; i++)
 		{
-			for (int j = i + 1; j < 25; j++)
+			for (int j = i + 1; j <  SAVED*MULTIPLE; j++)
 			{
 				POS p;
 				g.clear();
@@ -493,7 +495,7 @@ int main()
 
 			}
 		}
-		std::sort(entity, entity + 25, ENTITY::ENTITYcompare);
+		std::sort(entity, entity + SAVED*MULTIPLE, ENTITY::ENTITYcompare);
 		time_t rawtime;
 		struct tm * timeinfo;
 		std::ostringstream setting;
@@ -503,18 +505,29 @@ int main()
 		setting << "omok_" << timeinfo->tm_year + 1900 << '-' << std::setw(2) << std::setfill('0') << timeinfo->tm_mon + 1 << '-' << std::setw(2) << std::setfill('0') << timeinfo->tm_mday << '-' << std::setw(2) << std::setfill('0') << timeinfo->tm_hour << '-' << std::setw(2) << std::setfill('0') << timeinfo->tm_min << '-' << std::setw(2) << std::setfill('0') << timeinfo->tm_sec << ".csv";
 		std::ofstream *out=new std::ofstream(setting.str());
 
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i <  SAVED; i++)
 		{
 			entity[i].saveParameter(out);
 		}
 		out->close();
 		delete out;
-		for (int i = 0; i < 5; i++)
+		std::cout << std::endl << "Game end" << std::endl;
+		for (int i = 0; i < SAVED*MULTIPLE; i++)
 		{
+			std::cout << i << " : " << entity[i].point << "\t";
+		}
+		std::cout << std::endl << std::endl;
 
-			for (int j = 1; j < 5; j++)
+		for (int i = 1; i <  SAVED; i++)
+		{
+			entity[i*MULTIPLE].setParameter(entity[i].getParameter);
+		}
+		for (int i = 0; i < SAVED; i++)
+		{
+			entity[i*MULTIPLE].setParameter(entity[i].getParameter);
+			for (int j = 1; j < MULTIPLE; j++)
 			{
-				entity[i * 5 + j].makeParameter(entity[i].parameter);
+				entity[i *  MULTIPLE + j].makeParameter(entity[i].parameter);
 			}
 		}
 	}

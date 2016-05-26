@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <queue>
 #include <stack>
@@ -14,19 +15,21 @@
 #include <sstream>
 #include <ctime>
 #include <fstream>
+#include <iomanip>
 #include "gotoxy.h"
 #include "timer.h"
 #include "MAP.h"
 #include "AI.h"
 #include "CURSOR.h"
 #include "ENTITY.h"
+#include "game.h"
 
 
 
 #define MAP_SIZE 15
 
-#define TEST
-//#define LEARNING
+//#define TEST
+#define LEARNING
 
 #ifdef TEST
 using namespace std;
@@ -134,6 +137,7 @@ int main(void)
 {
 
 	POS p;
+	PARAMETER pa;
 	ostringstream setting;
 	TIMER *timer;
 	CURSOR::setCursor(CURSOR_TYPE::NOCURSOR);
@@ -143,6 +147,17 @@ int main(void)
 	system(setting.str().c_str());
 	initMap(map.size);
 	AI * ai = new AI();
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			for (int k = 0; k < 2; k++)
+			{
+				pa.value[i][j][k] = 2;
+			}
+		}
+	}
+	ai->setParameter(pa);
 	ai->start();
 	p = ai->nextPosition();
 	print(p, 1);
@@ -369,19 +384,140 @@ void delTxt(void)
 #ifdef LEARNING
 int main()
 {
-	
-	std::ofstream out("a.txt");
-	out << 1;
-	for (int i = 2; i < 46;i++)
+	std::string commonString;
+	std::cin >> commonString;
+	std::ifstream in(commonString);
+	while (in.fail())
 	{
-		out << "," << i;
+		std::cin >> commonString;
+		in.open(commonString);
 	}
-	out.close();
-	ENTITY e;
-	std::ifstream in("a.txt");
+	ENTITY entity[50];
 	char b[200];
-	in.getline(b,200);
-	e.setParameter(b);
+	for (int i = 0; i < 5; i++)
+	{
+		
+		in.getline(b, 200);
+		entity[i].setParameter(b);
+		for (int j = 1; j < 5; j++)
+		{
+			entity[i * 5 + j].makeParameter(entity[i].parameter);
+		}
+	}
+	in.close();
+	game g;
+	while (1)
+	{
+		for (int i = 0; i < 24; i++)
+		{
+			for (int j = i + 1; j < 25; j++)
+			{
+				POS p;
+				g.clear();
+				int ch = 0;
+				AI *ai1 = new AI();
+				AI *ai2 = new AI();
+				ai1->setParameter(entity[i].parameter);
+				ai2->setParameter(entity[j].parameter);
+				ai1->start();
+				p = ai1->nextPosition();
+				g.check(p);
+				
+				while (1)
+				{
+					ai2->playTurn(p);
+					p = ai2->nextPosition();
+			
+					ch = g.check(p);
+					if (ch) break;
+					ai1->playTurn(p);
+					p = ai1->nextPosition();
+					
+					ch = g.check(p);
+					if (ch) break;
+				}
+				if (ch == 1)
+				{
+					entity[i].point += 2;
+					std::cout << i << " win" << std::endl;
+				}
+				else if (ch == -1)
+				{
+					entity[j].point += 2;
+					std::cout << j << " win" << std::endl;
+				}
+				else if (ch == 3)
+				{
+					entity[i].point++;
+					entity[j].point++;
+				}
+				delete ai1;
+				delete ai2;
+				g.clear();
+
+				ai1 = new AI();
+				ai2 = new AI();
+				ai1->setParameter(entity[i].parameter);
+				ai2->setParameter(entity[j].parameter);
+				ai2->start();
+				p = ai2->nextPosition();
+				g.check(p);
+				while (1)
+				{
+					ai1->playTurn(p);
+					p = ai1->nextPosition();
+					ch = g.check(p);
+					if (ch) break;
+					ai2->playTurn(p);
+					p = ai2->nextPosition();
+					ch = g.check(p);
+					if (ch) break;
+				}
+				if (ch == 1)
+				{
+					std::cout << j << " win" << std::endl;
+					entity[j].point += 2;
+				}
+				else if (ch == -1)
+				{
+					std::cout << i << " win" << std::endl;
+					entity[i].point += 2;
+				}
+				else if (ch == 3)
+				{
+					entity[i].point++;
+					entity[j].point++;
+				}
+				delete ai1;
+				delete ai2;
+
+			}
+		}
+		std::sort(entity, entity + 25, ENTITY::ENTITYcompare);
+		time_t rawtime;
+		struct tm * timeinfo;
+		std::ostringstream setting;
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
+		setting.str(std::string());
+		setting << "omok_" << timeinfo->tm_year + 1900 << '-' << std::setw(2) << std::setfill('0') << timeinfo->tm_mon + 1 << '-' << std::setw(2) << std::setfill('0') << timeinfo->tm_mday << '-' << std::setw(2) << std::setfill('0') << timeinfo->tm_hour << '-' << std::setw(2) << std::setfill('0') << timeinfo->tm_min << '-' << std::setw(2) << std::setfill('0') << timeinfo->tm_sec << ".csv";
+		std::ofstream *out=new std::ofstream(setting.str());
+
+		for (int i = 0; i < 5; i++)
+		{
+			entity[i].saveParameter(out);
+		}
+		out->close();
+		for (int i = 0; i < 5; i++)
+		{
+
+			for (int j = 1; j < 5; j++)
+			{
+				entity[i * 5 + j].makeParameter(entity[i].parameter);
+			}
+		}
+	}
+	
 	return 0;
 }
 #else

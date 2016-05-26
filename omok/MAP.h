@@ -1,4 +1,10 @@
 #pragma once
+
+struct POS
+{
+	int x, y;
+};
+
 class MAP
 {
 private:

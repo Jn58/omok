@@ -5,22 +5,12 @@
 #define THREAD int((std::thread::hardware_concurrency()*3)/2)
 //#define SINGLE
 //#define FURTHER
-PARAMETER p;
+
 AI::AI()
 {
 	toDoMutex = new std::mutex();
 	toDo = new std::stack<calc *>;
 	thread = new std::thread*[THREAD];
-	for (int i = 0; i < 6; i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			for (int k = 0; k < 2; k++)
-			{
-				p.value[i][j][k] = 1;
-			}
-		}
-	}
 }
 
 AI::~AI()
@@ -33,7 +23,7 @@ AI::~AI()
 
 void AI::start(void)
 {
-	turn = new calc(1);
+	turn = new calc(1,parameter);
 	this->calculate();
 }
 
@@ -71,7 +61,7 @@ void AI::playTurn(POS position)
 	{
 		if (turn == NULL)
 		{
-			turn = new calc();
+			turn = new calc(parameter);
 		}
 		turn = turn->enemyPlay(position);
 
@@ -165,6 +155,20 @@ void AI::reduceChild(int num)
 	}
 }
 
+void AI::setParameter(PARAMETER p)
+{
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			for (int k = 0; k < 2; k++)
+			{
+				parameter.value[i][j][k] = p.value[i][j][k];
+			}
+		}
+	}
+}
+
 
 calc::calc()
 {
@@ -173,12 +177,28 @@ calc::calc()
 	this->turn = -1;
 	this->step = 0;
 }
+calc::calc(PARAMETER p)
+{
+	this->parent = NULL;
+	this->map = new MAP();
+	this->turn = -1;
+	this->step = 0;
+	setParameter(p);
+}
 calc::calc(int step)
 {
 	this->parent = NULL;
 	this->map = new MAP();
 	this->turn = -1;
 	this->step = step;
+}
+calc::calc(int step,PARAMETER p)
+{
+	this->parent = NULL;
+	this->map = new MAP();
+	this->turn = -1;
+	this->step = step;
+	setParameter(p);
 }
 calc::calc(MAP *  map, int  turn, int step, POS position)
 {
@@ -200,6 +220,17 @@ calc::calc(MAP *  map, int  turn, int step, POS position, calc  *parent)
 	this->position.y = position.y;
 	this->map->map[position.x][position.y] = turn;
 }
+calc::calc(MAP *  map, int  turn, int step, POS position, calc  *parent,PARAMETER p)
+{
+	this->map = new MAP(map);
+	this->turn = turn;
+	this->step = step;
+	this->parent = parent;
+	this->position.x = position.x;
+	this->position.y = position.y;
+	this->map->map[position.x][position.y] = turn;
+	setParameter(p);
+}
 
 calc::calc(MAP * map, POS position)
 {
@@ -210,6 +241,18 @@ calc::calc(MAP * map, POS position)
 	this->position.x = position.x;
 	this->position.y = position.y;
 	this->map->map[position.x][position.y] = -1;
+}
+
+calc::calc(MAP * map, POS position,PARAMETER p)
+{
+	this->map = new MAP(map);
+	this->turn = -1;
+	this->step = 0;
+	this->parent = NULL;
+	this->position.x = position.x;
+	this->position.y = position.y;
+	this->map->map[position.x][position.y] = -1;
+	setParameter(p);
 }
 
 calc::~calc()
@@ -339,20 +382,79 @@ void calc::evaluatePoint(void)
 	}
 	for (int i = 0; i < 5; i++)
 	{
-		sum += evaluationFunction(pi[i],i,step,p);
+		sum += double(pow(1000, i)*pi[i]);
 	}
 	updatePoint(sum*turn );
+}
+void calc::evaluatePoint(PARAMETER p)
+{
+	int pi[5] = { 0, };
+	double sum = 0;
+	int count = 0;
+	for (int i = 0, j; i < 5; i++)
+	{
+		if (this->position.x - 4 + i < 0) continue;
+		if (this->position.x + i >= map->size) break;
+		for (j = 0, count = 0; j < 5; j++)
+		{
+			if (map->map[this->position.x - 4 + i + j][this->position.y] == turn*-1) break;
+			if (map->map[this->position.x - 4 + i + j][this->position.y] == turn) count++;
+		}
+		if (j == 5)
+			pi[count - 1]++;
+	}
+	for (int i = 0, j = 0; i < 5; i++)
+	{
+		if (this->position.y - 4 + i < 0) continue;
+		if (this->position.y + i >= map->size) break;
+		for (j = 0, count = 0; j < 5; j++)
+		{
+			if (map->map[this->position.x][this->position.y - 4 + i + j] == turn*-1) break;
+			if (map->map[this->position.x][this->position.y - 4 + i + j] == turn) count++;
+		}
+		if (j == 5)
+			pi[count - 1]++;
+	}
+	for (int i = 0, j = 0; i < 5; i++)
+	{
+		if (this->position.x - 4 + i < 0 || this->position.y - 4 + i < 0) continue;
+		if (this->position.x + i >= map->size || this->position.y + i >= map->size) break;
+		for (j = 0, count = 0; j < 5; j++)
+		{
+			if (map->map[this->position.x - 4 + i + j][this->position.y - 4 + i + j] == turn*-1) break;
+			if (map->map[this->position.x - 4 + i + j][calc::position.y - 4 + i + j] == turn) count++;
+		}
+		if (j == 5)
+			pi[count - 1]++;
+	}
+	for (int i = 0, j = 0; i < 5; i++)
+	{
+		if (calc::position.x - 4 + i < 0 || calc::position.y + 4 - i >= map->size) continue;
+		if (calc::position.x + i >= map->size || calc::position.y - i < 0) break;
+		for (j = 0, count = 0; j < 5; j++)
+		{
+			if (map->map[calc::position.x - 4 + i + j][calc::position.y + 4 - i - j] == turn*-1) break;
+			if (map->map[calc::position.x - 4 + i + j][calc::position.y + 4 - i - j] == turn) count++;
+		}
+		if (j == 5)
+			pi[count - 1]++;
+	}
+	for (int i = 0; i < 5; i++)
+	{
+		sum += evaluationFunction(pi[i], i, step, p);
+	}
+	updatePoint(sum*turn);
 }
 double calc::evaluationFunction(int count, int num, int step,PARAMETER p)
 {
 	double a, b;
 	a = p.value[num][0][0] * pow(count, p.value[num][0][1]);
 	a+=p.value[num][1][0]* pow( p.value[num][1][1], count);
-	a += p.value[num][2][0] * (logb(count + 2) / logb(p.value[num][2][1]));
+	a += p.value[num][2][0] * (logb(count + 2) * logb(p.value[num][2][1]));
 	a = pow(a, 3);
 	b = p.value[5][0][0] * pow(count, p.value[5][0][1]);
 	b += p.value[5][1][0] * pow(p.value[5][1][1], count);
-	b += p.value[5][2][0] * (logb(count + 2) / logb(p.value[5][2][1]));
+	b += p.value[5][2][0] * (logb(count + 2) * logb(p.value[5][2][1]));
 	b = pow(b, 3);
 	return a*b;
 }
@@ -445,7 +547,7 @@ void calc::makeChild(std::mutex * toDoMutex, std::stack<calc *> * toDo)
 		POS childPos = posQ->front();
 		posQ->pop();
 		if (rule(map, &childPos, turn*-1)) continue;
-		calc* child = new calc(map, turn*-1, step + 1, childPos, this);
+		calc* child = new calc(map, turn*-1, step + 1, childPos, this,parameter);
 		toDoMutex->lock();
 		toDo->push(child);
 		toDoMutex->unlock();
@@ -460,7 +562,7 @@ void calc::work(std::mutex * toDoMutex, std::stack<calc *> * toDo)
 	this->step = this->parent->step - 1;
 	if (child.empty())
 	{
-		calc::evaluatePoint();
+		calc::evaluatePoint(parameter);
 		calc::makeChild(toDoMutex, toDo);
 	}
 	else
@@ -484,7 +586,7 @@ void calc::place(void)
 
 calc * calc::enemyPlay(POS position)
 {
-	calc * nextTurn = new calc(map, position);
+	calc * nextTurn = new calc(map, position,parameter);
 	delete this;
 	return nextTurn;
 }

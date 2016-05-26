@@ -508,6 +508,7 @@ int main()
 			entity[i].saveParameter(out);
 		}
 		out->close();
+		delete out;
 		for (int i = 0; i < 5; i++)
 		{
 

@@ -31,7 +31,7 @@
 #define MULTIPLE 1
 
 //#define TEST
-#define LEARNING
+//#define LEARNING
 
 #ifdef TEST
 using namespace std;
@@ -544,8 +544,30 @@ int main()
 {
 	AI ai;
 	POS p;
+	PARAMETER pa;
 	std::string input;
 	std::cin >> input;
+	for (int i = 0; i < 6; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			for (int k = 0; k < 2; k++)
+			{
+				pa.value[i][j][k] = 0.001;
+			}
+		}
+	}
+
+	for (int i = 0; i < 5; i++)
+	{
+		int j = 1;
+		int k = 0;
+		pa.value[i][j][k++] = 10;
+		pa.value[i][j][k] = 1000;		
+	}
+	pa.value[6][0][0] = 10;
+	pa.value[6][0][1] = 4;
+	ai.setParameter(pa);
 
 	if (input.compare("START")==0)
 	{
@@ -567,11 +589,11 @@ int main()
 	while (1)
 	{
 		p = enemyTurn();
-		if (check(p)) exit(0);
+		if (check(p)) break;
 		ai.playTurn(p);
 		p = ai.nextPosition();
 		printNext(p);
-		if (check(p))exit(0);
+		if (check(p))break;
 	}
 
 	

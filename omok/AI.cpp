@@ -5,6 +5,7 @@
 #define THREAD int((std::thread::hardware_concurrency()*3)/2)
 //#define SINGLE
 //#define FURTHER
+//#define EVALUATION_FUNCTION
 
 AI::AI()
 {
@@ -386,6 +387,7 @@ void calc::evaluatePoint(void)
 	}
 	updatePoint(sum*turn / (pow(step, 4)));
 }
+
 void calc::evaluatePoint(PARAMETER p)
 {
 	int pi[5] = { 0, };
@@ -439,18 +441,28 @@ void calc::evaluatePoint(PARAMETER p)
 		if (j == 5)
 			pi[count - 1]++;
 	}
+#ifdef EVALUATION_FUNCTION
 	for (int i = 0; i < 5; i++)
 	{
 		sum += evaluationFunction(pi[i], i, step, p);
 	}
 	updatePoint(sum*turn);
+#else
+	for (int i = 0; i < 5; i++)
+	{
+		sum += double(pow(1000, i)*pi[i]);
+	}
+	updatePoint(sum*turn * (pow(step, 4)));
+#endif // EVALUATION_FUNCTION
+	
 }
+
 double calc::evaluationFunction(int count, int num, int step,PARAMETER p)
 {
 	double a, b;
 	a = p.value[num][0][0] * pow(count, p.value[num][0][1]);
 	a+=p.value[num][1][0]* pow( p.value[num][1][1], count);
-	a += p.value[num][2][0] * (logb(count + 2) * logb(p.value[num][2][1]));
+	a += p.value[num][2][0] * pow(logb(count + 2) , p.value[num][2][1]);
 	a = pow(a, 3);
 	b = p.value[5][0][0] * pow(count, p.value[5][0][1]);
 	b += p.value[5][1][0] * pow(p.value[5][1][1], count);
